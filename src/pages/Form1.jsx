@@ -23,6 +23,7 @@ const Form1 = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const networkGDID = searchParams.get('gdid');
+  const loguuid = searchParams.get('uuid');
 
   useEffect(() => {
     const countryList = getCountries().map((code) => {
@@ -114,9 +115,10 @@ const Form1 = () => {
       );
       if (otpResponse.data[0].error==="false") {
         const networkGDIDValue = networkGDID;
+        const loguuidValue = loguuid;
         const submissionResponse = await axios.post(
           '/workflow.trigger/gdrecieveqrcodeformsubmit67b3210bc2752',
-          `phoneNumber=${encodeURIComponent(numericPhoneNumber)}&networkGDID=${encodeURIComponent(networkGDIDValue)}`,
+          `phoneNumber=${encodeURIComponent(numericPhoneNumber)}&networkGDID=${encodeURIComponent(networkGDIDValue)}&uuid=${encodeURIComponent(loguuidValue)}`,
           {
             headers: {
               'Content-Type': 'application/x-www-form-urlencoded',
