@@ -23,7 +23,7 @@ const Form1 = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const networkGDID = searchParams.get('gdid');
-  const loguuid = searchParams.get('uuid');
+  const logrowId = searchParams.get('rowid');
 
   useEffect(() => {
     const countryList = getCountries().map((code) => {
@@ -62,7 +62,7 @@ const Form1 = () => {
     try {
       const numericPhoneNumber = phoneNumber.replace(/\D/g, '');
       const response = await axios.post(
-        '/workflow.trigger/generateotpforanynumber67bfffa9eefd4',
+        'https://innov-dev.beta.injomo.com/workflow.trigger/generateotpforanynumber67bfffa9eefd4',
         `phone=${encodeURIComponent(numericPhoneNumber)}&action=generate&countryCode=${encodeURIComponent(getCountryCallingCode(countryCode))}`,
         {
           headers: {
@@ -105,7 +105,7 @@ const Form1 = () => {
     setIsLoading(true);
     try {
       const otpResponse = await axios.post(
-        '/workflow.trigger/checkotpforallnumbers67c186f9b4a64',
+        'https://innov-dev.beta.injomo.com/workflow.trigger/checkotpforallnumbers67c186f9b4a64',
         `OTP=${encodeURIComponent(otp)}&phone=${encodeURIComponent(numericPhoneNumber)}`,
         {
           headers: {
@@ -113,12 +113,12 @@ const Form1 = () => {
           },
         }
       );
-      if (otpResponse.data[0].error==="false") {
+      if (otpResponse.data[0].error === "false") {
         const networkGDIDValue = networkGDID;
-        const loguuidValue = loguuid;
+        const logrowIdValue = logrowId;
         const submissionResponse = await axios.post(
-          '/workflow.trigger/gdrecieveqrcodeformsubmit67b3210bc2752',
-          `phoneNumber=${encodeURIComponent(numericPhoneNumber)}&networkGDID=${encodeURIComponent(networkGDIDValue)}&uuid=${encodeURIComponent(loguuidValue)}`,
+          'https://innov-dev.beta.injomo.com/workflow.trigger/gdrecieveqrcodeformsubmit67b3210bc2752',
+          `phoneNumber=${encodeURIComponent(numericPhoneNumber)}&networkGDID=${encodeURIComponent(networkGDIDValue)}&logRowID=${encodeURIComponent(logrowIdValue)}`,
           {
             headers: {
               'Content-Type': 'application/x-www-form-urlencoded',
@@ -129,7 +129,7 @@ const Form1 = () => {
 
         if (submissionResponse.data[0].PatientExistFlag === "true") {
           navigate(`/showexistingpatients`, {
-            state: { 
+            state: {
               state: { response: submissionResponse.data },
               networkGDID: networkGDIDValue,
               phoneNumber: numericPhoneNumber,
@@ -138,9 +138,9 @@ const Form1 = () => {
           });
         } else {
           navigate(`/add-new-patient`, {
-            state: { 
-              phoneNumber: numericPhoneNumber, 
-              networkGDID: networkGDIDValue, 
+            state: {
+              phoneNumber: numericPhoneNumber,
+              networkGDID: networkGDIDValue,
               countryCode: numericCountryCode,
             },
           });
@@ -225,11 +225,12 @@ const Form1 = () => {
               sx={{
                 mt: 2,
                 width: '100%',
-                borderColor: '#666',
-                color: '#333',
+                bgcolor: '#E33610',
+                borderColor: '#E33610',
+                color: 'white',
                 '&:hover': {
-                  borderColor: '#333',
-                  bgcolor: 'rgba(0, 0, 0, 0.04)',
+                  borderColor: '#E33610',
+                  bgcolor: '#E33610',
                 },
               }}
             >
@@ -257,11 +258,12 @@ const Form1 = () => {
               sx={{
                 mt: 2,
                 width: '100%',
-                borderColor: '#666',
-                color: '#333',
+                bgcolor: '#E33610',
+                borderColor: '#E33610',
+                color: 'white',
                 '&:hover': {
-                  borderColor: '#333',
-                  bgcolor: 'rgba(0, 0, 0, 0.04)',
+                  borderColor: '#E33610',
+                  bgcolor: '#E33610',
                 },
               }}
             >

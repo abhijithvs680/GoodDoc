@@ -9,7 +9,10 @@ import {
   CircularProgress,
   Typography,
 } from '@mui/material';
+import { LocalizationProvider, DateField } from '@mui/x-date-pickers';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import axios from 'axios';
+import dayjs from 'dayjs';
 
 const AddNewPatient = () => {
   const location = useLocation();
@@ -17,24 +20,90 @@ const AddNewPatient = () => {
   const navigate = useNavigate();
 
   const [name, setName] = useState('');
+  const [dob, setDob] = useState(null); // Date of birth using Dayjs
   const [age, setAge] = useState('');
   const [gender, setGender] = useState('');
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState({ name: '', dob: '', age: '', gender: '', email: '' });
+
+  const calculateAge = (dob) => {
+    if (!dob || !dob.isValid()) return '';
+    return dayjs().diff(dob, 'year');
+  };
+
+  const formatDobForApi = (dob) => {
+    if (!dob || !dob.isValid()) return '';
+    return dob.format('DD/MM/YYYY'); // Format to 29/01/2002
+  };
+
+  const handleDobChange = (newValue) => {
+    setDob(newValue);
+    if (newValue && newValue.isValid()) {
+      if (newValue.isAfter(dayjs())) {
+        setErrors((prev) => ({ ...prev, dob: 'The date of birth cannot exceed the current date' }));
+        setAge('');
+      } else {
+        setAge(calculateAge(newValue));
+        setErrors((prev) => ({ ...prev, dob: '', age: '' }));
+      }
+    } else {
+      setAge(''); // Clear age if DOB is invalid
+      setErrors((prev) => ({ ...prev, dob: '' })); // No validation message unless after today
+    }
+  };
+
+  const handleAgeChange = (e) => {
+    if (!dob) { // Only allow age change if no DOB is set
+      const newAge = e.target.value.replace(/\D/g, '');
+      setAge(newAge);
+      setErrors((prev) => ({ ...prev, age: newAge ? '' : 'Age is required if date of birth is not provided' }));
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors = { name: '', dob: '', age: '', gender: '', email: '' };
+    let isValid = true;
+
+    if (!name.trim()) {
+      newErrors.name = 'Name is required';
+      isValid = false;
+    }
+    if (!age && !dob) {
+      newErrors.age = 'Age or date of birth is required';
+      isValid = false;
+    }
+    if (dob && dob.isAfter(dayjs())) {
+      newErrors.dob = 'The date of birth cannot exceed the current date';
+      isValid = false;
+    }
+    if (!gender) {
+      newErrors.gender = 'Gender is required';
+      isValid = false;
+    }
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      newErrors.email = 'Invalid email format';
+      isValid = false;
+    }
+
+    setErrors(newErrors);
+    return isValid;
+  };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    if (!name || !age || !gender) {
-      alert('Please fill in all required fields.');
+    if (!validateForm()) {
       return;
     }
 
     setIsLoading(true);
     try {
+      const finalAge = dob && dob.isValid() ? calculateAge(dob) : age; // Use calculated age from DOB if provided, otherwise use entered age
+      const formattedDob = formatDobForApi(dob); // Format DOB to DD/MM/YYYY
       const response = await axios.post(
-        '/workflow.trigger/gdqraddnewpatient67c00f700b7fd',
-        `countryCode=${encodeURIComponent(countryCode)}&phoneNumber=${encodeURIComponent(phoneNumber)}&name=${encodeURIComponent(name)}&age=${encodeURIComponent(age)}&gender=${encodeURIComponent(gender)}&email=${encodeURIComponent(email)}&networkGDID=${encodeURIComponent(networkGDID)}`,
+        'https://innov-dev.beta.injomo.com/workflow.trigger/gdqraddnewpatient67c00f700b7fd',
+        `countryCode=${encodeURIComponent(countryCode)}&phoneNumber=${encodeURIComponent(phoneNumber)}&name=${encodeURIComponent(name)}&dob=${encodeURIComponent(formattedDob)}&age=${encodeURIComponent(finalAge)}&gender=${encodeURIComponent(gender)}&email=${encodeURIComponent(email)}&networkGDID=${encodeURIComponent(networkGDID)}`,
         {
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
@@ -43,7 +112,8 @@ const AddNewPatient = () => {
       );
       navigate('/booking', { state: { response: response.data[0] } });
     } catch (error) {
-      alert('Failed to submit. Please try again.');
+      const errorMessage = error.response?.data?.message || 'Failed to submit. Please try again.';
+      alert(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -81,22 +151,38 @@ const AddNewPatient = () => {
           margin="normal"
           variant="outlined"
           required
+          error={!!errors.name}
+          helperText={errors.name}
           sx={{ mb: 2 }}
         />
-
+        <LocalizationProvider dateAdapter={AdapterDayjs}>
+          <DateField
+            label="Date of Birth"
+            value={dob}
+            onChange={handleDobChange}
+            format="DD/MM/YYYY" // Display and input as 29/01/2002
+            fullWidth
+            margin="normal"
+            variant="outlined"
+            error={!!errors.dob}
+            helperText={errors.dob}
+            sx={{ mb: 2 }}
+          />
+        </LocalizationProvider>
         <TextField
           label="Age"
           value={age}
-          onChange={(e) => setAge(e.target.value.replace(/\D/g, ''))}
+          onChange={handleAgeChange}
           fullWidth
           margin="normal"
           variant="outlined"
-          required
+          required={!dob}
           type="tel"
-          inputProps={{ inputMode: 'numeric', pattern: '[0-9]*' }}
+          inputProps={{ inputMode: 'numeric', pattern: '[0-9]*', readOnly: dob && dob.isValid() }}
+          error={!!errors.age}
+          helperText={errors.age}
           sx={{ mb: 2 }}
         />
-
         <TextField
           select
           label="Gender"
@@ -106,40 +192,38 @@ const AddNewPatient = () => {
           margin="normal"
           variant="outlined"
           required
+          error={!!errors.gender}
+          helperText={errors.gender}
           sx={{ mb: 2 }}
         >
           <MenuItem value="Male">Male</MenuItem>
           <MenuItem value="Female">Female</MenuItem>
-          <MenuItem value="Others">Other</MenuItem>
+          <MenuItem value="Others">Others</MenuItem>
         </TextField>
-
         <TextField
-          label="Email"
+          label="Email (Optional)"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           fullWidth
           margin="normal"
           variant="outlined"
           type="email"
+          error={!!errors.email}
+          helperText={errors.email}
           sx={{ mb: 2 }}
         />
-
         <Button
           type="submit"
-          variant="outlined"
+          variant="contained"
           disabled={isLoading}
           sx={{
             mt: 2,
             width: '100%',
-            borderColor: '#666',
-            color: '#333',
-            '&:hover': { 
-              borderColor: '#333',
-              bgcolor: 'rgba(0, 0, 0, 0.04)'
-            },
+            bgcolor: '#E33610',
+            '&:hover': { bgcolor: '#D32F0E' },
           }}
         >
-          Submit
+          {isLoading ? <CircularProgress size={24} sx={{ color: 'white' }} /> : 'Submit'}
         </Button>
       </Box>
       {isLoading && (

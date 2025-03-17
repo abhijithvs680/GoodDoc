@@ -62,7 +62,7 @@ const ShowExistingPatients = () => {
     setIsLoading(true);
     try {
       const response = await axios.post(
-        '/workflow.trigger/gdqrselectpatient67bff515ad723',
+        'https://innov-dev.beta.injomo.com/workflow.trigger/gdqrselectpatient67bff515ad723',
         `patientGDID=${encodeURIComponent(patient.PatientGDID)}&networkGDID=${encodeURIComponent(networkGDID)}`,
         {
           headers: {
@@ -188,11 +188,12 @@ const ShowExistingPatients = () => {
           onClick={handleAddNewPatient}
           sx={{ 
             width: '100%', 
-            borderColor: '#666',
-            color: '#333',
+            borderColor: '#E33610',
+            bgcolor: '#E33610',
+            color: 'white',
             '&:hover': {
-              borderColor: '#333',
-              bgcolor: 'rgba(0, 0, 0, 0.04)',
+              borderColor: '#E33610',
+              bgcolor: '#E33610',
             },
           }}
         >

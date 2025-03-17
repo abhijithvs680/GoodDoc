@@ -85,7 +85,7 @@ const Booking = () => {
 
     try {
       const response = await axios.post(
-        '/workflow.trigger/gdqrappoinmentrequestreciver67b6d8cb139ad',
+        'https://innov-dev.beta.injomo.com/workflow.trigger/gdqrappoinmentrequestreciver67b6d8cb139ad',
         `patientGDID=${encodeURIComponent(patientGDID || '')}&networkGDID=${encodeURIComponent(networkGDID || '')}&details=${encodeURIComponent(medicalHistoryDetails)}&historyShare=${encodeURIComponent(shareMedicalHistory.toString())}&btnText=RequestAppointment`,
         {
           headers: {
@@ -118,7 +118,7 @@ const Booking = () => {
   const handleShareMedicalHistory = async () => {
     try {
       const response = await axios.post(
-        '/workflow.trigger/gdqrappoinmentrequestreciver67b6d8cb139ad',
+        'https://innov-dev.beta.injomo.com/workflow.trigger/gdqrappoinmentrequestreciver67b6d8cb139ad',
         `patientGDID=${encodeURIComponent(patientGDID || '')}&networkGDID=${encodeURIComponent(networkGDID || '')}&btnText=ShareMedicalHistory`,
         {
           headers: {
@@ -143,7 +143,7 @@ const Booking = () => {
   const handleUnshareMedicalHistory = async () => {
     try {
       const response = await axios.post(
-        '/workflow.trigger/gdqrappoinmentrequestreciver67b6d8cb139ad',
+        'https://innov-dev.beta.injomo.com/workflow.trigger/gdqrappoinmentrequestreciver67b6d8cb139ad',
         `patientGDID=${encodeURIComponent(patientGDID || '')}&networkGDID=${encodeURIComponent(networkGDID || '')}&btnText=UnshareMedicalHistory`,
         {
           headers: {
@@ -268,13 +268,17 @@ const Booking = () => {
               onClick={handleBookAppointment}
               sx={{ 
                 width: '100%', 
-                borderColor: '#666', 
-                color: '#333', 
-                '&:hover': { borderColor: '#333', bgcolor: 'rgba(0, 0, 0, 0.04)' },
+                bgcolor: '#E33610',
+                borderColor: '#E33610',
+                color: 'white',
+                '&:hover': {
+                  borderColor: '#E33610',
+                  bgcolor: '#E33610',
+                },
                 mb: 2 
               }}
             >
-              Request Appointment
+              Request AN Appointment
             </Button>
 
             {sharedFlag === 'false' && (
@@ -283,9 +287,13 @@ const Booking = () => {
                 onClick={handleShareMedicalHistory}
                 sx={{ 
                   width: '100%', 
-                  borderColor: '#666', 
-                  color: '#333', 
-                  '&:hover': { borderColor: '#333', bgcolor: 'rgba(0, 0, 0, 0.04)' },
+                  bgcolor: '#E33610',
+                  borderColor: '#E33610',
+                  color: 'white',
+                  '&:hover': {
+                    borderColor: '#E33610',
+                    bgcolor: '#E33610',
+                  },
                   mb: 2 
                 }}
               >
@@ -299,9 +307,13 @@ const Booking = () => {
                 onClick={handleUnshareMedicalHistory}
                 sx={{ 
                   width: '100%', 
-                  borderColor: '#666', 
-                  color: '#333', 
-                  '&:hover': { borderColor: '#333', bgcolor: 'rgba(0, 0, 0, 0.04)' }
+                  bgcolor: '#E33610',
+                  borderColor: '#E33610',
+                  color: 'white',
+                  '&:hover': {
+                    borderColor: '#E33610',
+                    bgcolor: '#E33610',
+                  }
                 }}
               >
                 Unshare Medical History
@@ -315,7 +327,7 @@ const Booking = () => {
             <Box sx={{ mb: 2 }}>
               <TextField
                 fullWidth
-                placeholder="Enter appointment details here..."
+                placeholder="Describe your health issues and preferred appointment time"
                 multiline
                 rows={4}
                 variant="outlined"
@@ -350,16 +362,17 @@ const Booking = () => {
             <Box>
               <Button 
                 variant="outlined" 
-                startIcon={<Box component="span" sx={{ fontSize: '1rem', marginRight: 1 }}>📅</Box>}
+                startIcon={<Box component="span" sx={{ fontSize: '1rem', marginRight: 1 }}></Box>}
                 onClick={handleRequestAppointment}
                 sx={{ 
-                  width: '100%', 
-                  borderColor: '#666', 
-                  color: '#333', 
-                  '&:hover': { borderColor: '#333', bgcolor: 'rgba(0, 0, 0, 0.04)' }
+                  width: '100%',
+                  bgcolor: '#E33610',
+                  borderColor: '#E33610', 
+                  color: 'white', 
+                  '&:hover': { borderColor: '#E33610', bgcolor: '#E33610' }
                 }}
               >
-                Request Appointment 
+                Submit
               </Button>
             </Box>
           </Box>
@@ -382,11 +395,12 @@ const Booking = () => {
               onClick={handleAddNewPatient}
               sx={{ 
                 width: '100%', 
-                borderColor: '#666',
-                color: '#333',
+                bgcolor: '#E33610',
+                borderColor: '#E33610',
+                color: 'white',
                 '&:hover': {
-                  borderColor: '#333',
-                  bgcolor: 'rgba(0, 0, 0, 0.04)',
+                  borderColor: '#E33610',
+                  bgcolor: '#E33610',
                 },
               }}
             >
