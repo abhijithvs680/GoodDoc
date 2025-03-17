@@ -19,7 +19,7 @@ const VerifiedIcon = () => (
       display: 'inline-block',
       width: 16,
       height: 16,
-      bgcolor: '#D4A017',
+      bgcolor: '#2D7B32',
       borderRadius: '50%',
       position: 'relative',
       marginBottom: '4px',
@@ -85,7 +85,7 @@ const Booking = () => {
 
     try {
       const response = await axios.post(
-        'https://innov-dev.beta.injomo.com/workflow.trigger/gdqrappoinmentrequestreciver67b6d8cb139ad',
+        '/workflow.trigger/gdqrappoinmentrequestreciver67b6d8cb139ad',
         `patientGDID=${encodeURIComponent(patientGDID || '')}&networkGDID=${encodeURIComponent(networkGDID || '')}&details=${encodeURIComponent(medicalHistoryDetails)}&historyShare=${encodeURIComponent(shareMedicalHistory.toString())}&btnText=RequestAppointment`,
         {
           headers: {
@@ -101,14 +101,12 @@ const Booking = () => {
         networkGDID: apiData.networkGDID,
       };
       setAppointmentData(updatedData);
-      console.log('Appointment Data Set:', updatedData);
 
       setShowSuccessMessage(true);
       setShowAppointmentForm(false);
       setMedicalHistoryDetails('');
       setShareMedicalHistory(false);
     } catch (error) {
-      console.error('Error requesting appointment:', error);
       alert('Failed to request appointment. Please try again.');
     } finally {
       setIsLoading(false); // Stop loading
@@ -118,7 +116,7 @@ const Booking = () => {
   const handleShareMedicalHistory = async () => {
     try {
       const response = await axios.post(
-        'https://innov-dev.beta.injomo.com/workflow.trigger/gdqrappoinmentrequestreciver67b6d8cb139ad',
+        '/workflow.trigger/gdqrappoinmentrequestreciver67b6d8cb139ad',
         `patientGDID=${encodeURIComponent(patientGDID || '')}&networkGDID=${encodeURIComponent(networkGDID || '')}&btnText=ShareMedicalHistory`,
         {
           headers: {
@@ -127,7 +125,6 @@ const Booking = () => {
         }
       );
 
-      console.log('Share Medical History API Response:', response.data);
       if (response.data && response.data[0] && 'sharedFlag' in response.data[0]) {
         setSharedFlag(response.data[0].sharedFlag);
       } else {
@@ -135,7 +132,6 @@ const Booking = () => {
       }
       alert('Medical history shared successfully!');
     } catch (error) {
-      console.error('Error sharing medical history:', error);
       alert('Failed to share medical history. Please try again.');
     }
   };
@@ -143,7 +139,7 @@ const Booking = () => {
   const handleUnshareMedicalHistory = async () => {
     try {
       const response = await axios.post(
-        'https://innov-dev.beta.injomo.com/workflow.trigger/gdqrappoinmentrequestreciver67b6d8cb139ad',
+        '/workflow.trigger/gdqrappoinmentrequestreciver67b6d8cb139ad',
         `patientGDID=${encodeURIComponent(patientGDID || '')}&networkGDID=${encodeURIComponent(networkGDID || '')}&btnText=UnshareMedicalHistory`,
         {
           headers: {
@@ -152,7 +148,6 @@ const Booking = () => {
         }
       );
 
-      console.log('Unshare Medical History API Response:', response.data);
       if (response.data && response.data[0] && 'sharedFlag' in response.data[0]) {
         setSharedFlag(response.data[0].sharedFlag);
       } else {
@@ -160,13 +155,11 @@ const Booking = () => {
       }
       alert('Medical history unshared successfully!');
     } catch (error) {
-      console.error('Error unsharing medical history:', error);
       alert('Failed to unshare medical history. Please try again.');
     }
   };
 
   const handleAddNewPatient = () => {
-    console.log('Navigating with Appointment Data:', appointmentData);
     navigate('/add-new-patient', { 
       state: { 
         countryCode: appointmentData.countryCode,
@@ -189,7 +182,7 @@ const Booking = () => {
         position: 'relative', // Ensure Container can contain the fixed loader
       }}
     >
-      <Box sx={{ mb: 0, textAlign: 'center', p: 3 }}>
+      <Box sx={{ mb: -2, textAlign: 'center', p: 3 }}>
         <Typography 
           variant="h2" 
           sx={{ 
@@ -207,7 +200,7 @@ const Booking = () => {
         <Typography 
           variant="body1" 
           sx={{ 
-            color: '#D4A017',
+            color: '#2D7B32',
             fontSize: '1rem', 
             mb: 2 
           }}
@@ -250,7 +243,7 @@ const Booking = () => {
         <Typography 
           variant="body1" 
           sx={{ 
-            color: '#D4A017', 
+            color: '#2D7B32', 
             fontSize: '1rem', 
             mb: 2 
           }}
@@ -264,13 +257,14 @@ const Booking = () => {
           <Box sx={{ mb: 2 }}>
             <Button 
               variant="outlined" 
-              startIcon={<Box component="span" sx={{ fontSize: '1rem', marginRight: 1 }}>📅</Box>}
+              startIcon={<Box component="span" sx={{ fontSize: '1rem', marginRight: 1 }}></Box>}
               onClick={handleBookAppointment}
               sx={{ 
                 width: '100%', 
                 bgcolor: '#E33610',
                 borderColor: '#E33610',
                 color: 'white',
+                minHeight: '56px', // Aligns with TextField height
                 '&:hover': {
                   borderColor: '#E33610',
                   bgcolor: '#E33610',
@@ -290,6 +284,7 @@ const Booking = () => {
                   bgcolor: '#E33610',
                   borderColor: '#E33610',
                   color: 'white',
+                  minHeight: '56px', // Aligns with TextField height
                   '&:hover': {
                     borderColor: '#E33610',
                     bgcolor: '#E33610',
@@ -310,6 +305,7 @@ const Booking = () => {
                   bgcolor: '#E33610',
                   borderColor: '#E33610',
                   color: 'white',
+                  minHeight: '56px', // Aligns with TextField height
                   '&:hover': {
                     borderColor: '#E33610',
                     bgcolor: '#E33610',
@@ -325,9 +321,19 @@ const Booking = () => {
         {showAppointmentForm && (
           <Box sx={{ position: 'relative' }}>
             <Box sx={{ mb: 2 }}>
+              <Typography
+                variant="body1"
+                sx={{
+                  color: '#333',
+                  fontSize: '1rem',
+                  mb: 1,
+                }}
+              >
+                Describe your health condition
+              </Typography>
               <TextField
                 fullWidth
-                placeholder="Describe your health issues and preferred appointment time"
+                placeholder="Eg: Consultation for Fever, Follow-up, Annual Checkup"
                 multiline
                 rows={4}
                 variant="outlined"
@@ -369,6 +375,7 @@ const Booking = () => {
                   bgcolor: '#E33610',
                   borderColor: '#E33610', 
                   color: 'white', 
+                  minHeight: '56px', // Aligns with TextField height
                   '&:hover': { borderColor: '#E33610', bgcolor: '#E33610' }
                 }}
               >
@@ -398,6 +405,7 @@ const Booking = () => {
                 bgcolor: '#E33610',
                 borderColor: '#E33610',
                 color: 'white',
+                minHeight: '56px', // Aligns with TextField height
                 '&:hover': {
                   borderColor: '#E33610',
                   bgcolor: '#E33610',

@@ -26,23 +26,8 @@ const ShowExistingPatients = () => {
       const responseObj = location.state.state.response[0];
       if (responseObj.patients) {
         try {
-          const cleanedPatientsString = responseObj.patients
-            .replace(/\s+/g, ' ')
-            .replace(/,\s*]/g, ']')
-            .replace(/,\s*}/g, '}')
-            .trim();
-
-          let parsedPatients;
-          try {
-            parsedPatients = JSON.parse(cleanedPatientsString);
-          } catch (jsonError) {
-            const fixedPatientsString = cleanedPatientsString
-              .replace(/'/g, '"')
-              .replace(/,\s*(?=\]|\})/g, '');
-            parsedPatients = JSON.parse(fixedPatientsString);
-          }
-
-          if (Array.isArray(parsedPatients) && parsedPatients.every(p => p.Name && p.Age && p.Gender && p.PatientGDID)) {
+          const parsedPatients = JSON.parse(responseObj.patients);
+          if (Array.isArray(parsedPatients) && parsedPatients.every(p => p.Name && p.Age !== undefined && p.Gender && p.PatientGDID)) {
             setPatients(parsedPatients);
           } else {
             setPatients([]);
@@ -62,7 +47,7 @@ const ShowExistingPatients = () => {
     setIsLoading(true);
     try {
       const response = await axios.post(
-        'https://innov-dev.beta.injomo.com/workflow.trigger/gdqrselectpatient67bff515ad723',
+        '/workflow.trigger/gdqrselectpatient67bff515ad723',
         `patientGDID=${encodeURIComponent(patient.PatientGDID)}&networkGDID=${encodeURIComponent(networkGDID)}`,
         {
           headers: {
@@ -99,7 +84,7 @@ const ShowExistingPatients = () => {
         p: 0 
       }}
     >
-      <Box sx={{ mb: 0, textAlign: 'center', p: 3 }}>
+      <Box sx={{ mb: -2, textAlign: 'center', p: 3 }}>
         <Typography 
           variant="h4" 
           sx={{ 
@@ -115,7 +100,7 @@ const ShowExistingPatients = () => {
 
       <Box sx={{ p: 3 }}>
         {patients.length > 0 ? (
-          patients.map((patient, index) => (
+          patients.map((patient) => (
             <Card 
               key={patient.PatientGDID} 
               sx={{ 
@@ -142,7 +127,6 @@ const ShowExistingPatients = () => {
                       justifyContent: 'center',
                       color: '#FFF',
                       fontSize: '1rem',
-                      // Ensure fixed size on all screen sizes using min-width and min-height
                       minWidth: 40,
                       minHeight: 40,
                     }}
@@ -191,6 +175,7 @@ const ShowExistingPatients = () => {
             borderColor: '#E33610',
             bgcolor: '#E33610',
             color: 'white',
+            minHeight: '56px', // Aligns with TextField height
             '&:hover': {
               borderColor: '#E33610',
               bgcolor: '#E33610',

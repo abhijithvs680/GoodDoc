@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Box,
   Container,
@@ -7,10 +7,13 @@ import {
   Button,
   CircularProgress,
   Typography,
+  InputAdornment,
 } from '@mui/material';
+import SearchIcon from '@mui/icons-material/Search';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { parsePhoneNumberFromString, getCountryCallingCode, getCountries } from 'libphonenumber-js';
+import ReactCountryFlag from 'react-country-flag';
 
 const Form1 = () => {
   const [countryCode, setCountryCode] = useState('ZW');
@@ -18,8 +21,11 @@ const Form1 = () => {
   const [isValidPhone, setIsValidPhone] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [countries, setCountries] = useState([]);
+  const [filteredCountries, setFilteredCountries] = useState([]);
   const [showOTP, setShowOTP] = useState(false);
   const [otp, setOtp] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const inputRef = useRef(null);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const networkGDID = searchParams.get('gdid');
@@ -35,12 +41,16 @@ const Form1 = () => {
       };
     });
     setCountries(countryList);
+    setFilteredCountries(countryList);
   }, []);
 
   const handleCountryChange = (event) => {
     setCountryCode(event.target.value);
     setPhoneNumber('');
     setIsValidPhone(true);
+    // Reset search when an item is selected
+    setSearchQuery('');
+    setFilteredCountries(countries);
   };
 
   const handlePhoneChange = (event) => {
@@ -49,6 +59,24 @@ const Form1 = () => {
     const phoneNumberWithCountryCode = `+${getCountryCallingCode(countryCode)}${value}`;
     const phoneNumberObj = parsePhoneNumberFromString(phoneNumberWithCountryCode);
     setIsValidPhone(phoneNumberObj?.isValid() || false);
+  };
+
+  const handleSearchChange = (event) => {
+    event.stopPropagation();
+    const query = event.target.value.toLowerCase();
+    setSearchQuery(query);
+    
+    const filtered = countries.filter(
+      (country) =>
+        country.name.toLowerCase().includes(query) ||
+        country.callingCode.toLowerCase().includes(query)
+    );
+    setFilteredCountries(filtered);
+  };
+
+  const handleSearchClick = (event) => {
+    // Prevent the select dropdown from closing when clicking in search field
+    event.stopPropagation();
   };
 
   const handleValidate = async () => {
@@ -62,7 +90,7 @@ const Form1 = () => {
     try {
       const numericPhoneNumber = phoneNumber.replace(/\D/g, '');
       const response = await axios.post(
-        'https://innov-dev.beta.injomo.com/workflow.trigger/generateotpforanynumber67bfffa9eefd4',
+        '/workflow.trigger/generateotpforanynumber67bfffa9eefd4',
         `phone=${encodeURIComponent(numericPhoneNumber)}&action=generate&countryCode=${encodeURIComponent(getCountryCallingCode(countryCode))}`,
         {
           headers: {
@@ -70,7 +98,6 @@ const Form1 = () => {
           },
         }
       );
-      console.log('OTP Generation Response:', response.data);
       if (Array.isArray(response.data) && response.data.length > 0) {
         const apiResponse = response.data[0];
         if (apiResponse.error === "False") {
@@ -84,7 +111,6 @@ const Form1 = () => {
         alert('Invalid API response format. Please try again.');
       }
     } catch (error) {
-      console.error('Error generating OTP:', error);
       alert('Failed to generate OTP. Please try again.');
     } finally {
       setIsLoading(false);
@@ -105,7 +131,7 @@ const Form1 = () => {
     setIsLoading(true);
     try {
       const otpResponse = await axios.post(
-        'https://innov-dev.beta.injomo.com/workflow.trigger/checkotpforallnumbers67c186f9b4a64',
+        '/workflow.trigger/checkotpforallnumbers67c186f9b4a64',
         `OTP=${encodeURIComponent(otp)}&phone=${encodeURIComponent(numericPhoneNumber)}`,
         {
           headers: {
@@ -117,7 +143,7 @@ const Form1 = () => {
         const networkGDIDValue = networkGDID;
         const logrowIdValue = logrowId;
         const submissionResponse = await axios.post(
-          'https://innov-dev.beta.injomo.com/workflow.trigger/gdrecieveqrcodeformsubmit67b3210bc2752',
+          '/workflow.trigger/gdrecieveqrcodeformsubmit67b3210bc2752',
           `phoneNumber=${encodeURIComponent(numericPhoneNumber)}&networkGDID=${encodeURIComponent(networkGDIDValue)}&logRowID=${encodeURIComponent(logrowIdValue)}`,
           {
             headers: {
@@ -149,7 +175,6 @@ const Form1 = () => {
         alert('Invalid OTP. Please try again.');
       }
     } catch (error) {
-      console.error('Error during submission:', error);
       alert('Failed to verify OTP or submit. Please try again.');
     } finally {
       setIsLoading(false);
@@ -168,7 +193,7 @@ const Form1 = () => {
         position: 'relative',
       }}
     >
-      <Box sx={{ mb: 0, textAlign: 'center', p: 3 }}>
+      <Box sx={{ mb: -2, textAlign: 'center', p: 3 }}>
         <Typography
           variant="h5"
           sx={{
@@ -192,13 +217,99 @@ const Form1 = () => {
               margin="normal"
               variant="outlined"
               required
-              sx={{ mb: 2 }}
+              sx={{ mb: 0 }}
+              ref={inputRef}
+              SelectProps={{
+                MenuProps: {
+                  PaperProps: {
+                    style: {
+                      maxHeight: 300,
+                    },
+                    sx: {
+                      // This ensures the menu width matches the input field
+                      '& .MuiMenu-list': {
+                        width: '100%',
+                      },
+                      '& .MuiMenu-paper': {
+                        width: 'auto',
+                      },
+                      // Match the width of the input field
+                      width: inputRef?.current?.clientWidth,
+                    }
+                  },
+                  // Ensure dropdown closes when item is selected
+                  autoClose: true,
+                  disableAutoFocus: false,
+                  disableEnforceFocus: false,
+                  // Match the width of the trigger element
+                  anchorOrigin: {
+                    vertical: 'bottom',
+                    horizontal: 'left',
+                  },
+                  transformOrigin: {
+                    vertical: 'top',
+                    horizontal: 'left',
+                  },
+                },
+                renderValue: (selected) => {
+                  const country = countries.find((c) => c.code === selected);
+                  return (
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <ReactCountryFlag countryCode={selected} svg style={{ marginRight: '10px' }} />
+                      {country ? `${country.name} (${country.callingCode})` : selected}
+                    </Box>
+                  );
+                },
+              }}
             >
-              {countries.map((country) => (
-                <MenuItem key={country.code} value={country.code}>
-                  {country.name} ({country.callingCode})
-                </MenuItem>
-              ))}
+              {/* Fixed Search Box */}
+              <Box 
+                sx={{ 
+                  p: 1, 
+                  position: 'sticky', 
+                  top: 0, 
+                  bgcolor: 'white', 
+                  zIndex: 1,
+                  borderBottom: '1px solid #e0e0e0',
+                  width: 'auto',
+                }}
+                
+                onClick={handleSearchClick}
+              >
+                <TextField
+                  fullWidth
+                  variant="outlined"
+                  placeholder="Search country..."
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  onClick={handleSearchClick}
+                  onKeyDown={(e) => e.stopPropagation()}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon />
+                      </InputAdornment>
+                    ),
+                    sx: { 
+                      height: '40px',
+                      fontSize: '0.875rem'
+                    }
+                  }}
+                  size="small"
+                />
+              </Box>
+              
+              {/* Filtered Countries */}
+              {filteredCountries.length > 0 ? (
+                filteredCountries.map((country) => (
+                  <MenuItem key={country.code} value={country.code} sx={{ width: '100%' }}>
+                    <ReactCountryFlag countryCode={country.code} svg style={{ marginRight: '10px' }} />
+                    {country.name} ({country.callingCode})
+                  </MenuItem>
+                ))
+              ) : (
+                <MenuItem disabled sx={{ width: '100%' }}>No countries match your search</MenuItem>
+              )}
             </TextField>
             <TextField
               label="Phone Number"
@@ -216,7 +327,7 @@ const Form1 = () => {
                   ? `Invalid phone number for ${countryCode}`
                   : ''
               }
-              sx={{ mb: 2 }}
+              sx={{ mb: 0 }}
             />
             <Button
               type="submit"
@@ -228,6 +339,7 @@ const Form1 = () => {
                 bgcolor: '#E33610',
                 borderColor: '#E33610',
                 color: 'white',
+                minHeight: '56px', // Aligns with TextField height
                 '&:hover': {
                   borderColor: '#E33610',
                   bgcolor: '#E33610',
@@ -249,7 +361,7 @@ const Form1 = () => {
               required
               type="tel"
               inputProps={{ inputMode: 'numeric', pattern: '[0-9]*' }}
-              sx={{ mb: 2 }}
+              sx={{ mb: 0 }}
             />
             <Button
               type="submit"
@@ -261,6 +373,7 @@ const Form1 = () => {
                 bgcolor: '#E33610',
                 borderColor: '#E33610',
                 color: 'white',
+                minHeight: '56px', // Aligns with TextField height
                 '&:hover': {
                   borderColor: '#E33610',
                   bgcolor: '#E33610',

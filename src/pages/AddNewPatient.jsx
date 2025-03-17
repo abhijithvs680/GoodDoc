@@ -102,7 +102,7 @@ const AddNewPatient = () => {
       const finalAge = dob && dob.isValid() ? calculateAge(dob) : age; // Use calculated age from DOB if provided, otherwise use entered age
       const formattedDob = formatDobForApi(dob); // Format DOB to DD/MM/YYYY
       const response = await axios.post(
-        'https://innov-dev.beta.injomo.com/workflow.trigger/gdqraddnewpatient67c00f700b7fd',
+        '/workflow.trigger/gdqraddnewpatient67c00f700b7fd',
         `countryCode=${encodeURIComponent(countryCode)}&phoneNumber=${encodeURIComponent(phoneNumber)}&name=${encodeURIComponent(name)}&dob=${encodeURIComponent(formattedDob)}&age=${encodeURIComponent(finalAge)}&gender=${encodeURIComponent(gender)}&email=${encodeURIComponent(email)}&networkGDID=${encodeURIComponent(networkGDID)}`,
         {
           headers: {
@@ -130,7 +130,7 @@ const AddNewPatient = () => {
         p: 0,
       }}
     >
-      <Box sx={{ mb: 0, textAlign: 'center', p: 3 }}>
+      <Box sx={{ mb: -2, textAlign: 'center', p: 3 }}>
         <Typography
           variant="h5"
           sx={{
@@ -139,7 +139,7 @@ const AddNewPatient = () => {
             fontSize: '1.25rem',
           }}
         >
-          Register
+          Create your health profile
         </Typography>
       </Box>
       <Box component="form" onSubmit={handleSubmit} sx={{ p: 3 }}>
@@ -153,7 +153,7 @@ const AddNewPatient = () => {
           required
           error={!!errors.name}
           helperText={errors.name}
-          sx={{ mb: 2 }}
+          sx={{ mb: 0 }} // Reduced from mb: 2 to mb: 1
         />
         <LocalizationProvider dateAdapter={AdapterDayjs}>
           <DateField
@@ -166,7 +166,7 @@ const AddNewPatient = () => {
             variant="outlined"
             error={!!errors.dob}
             helperText={errors.dob}
-            sx={{ mb: 2 }}
+            sx={{ mb: 0 }} // Reduced from mb: 2 to mb: 1
           />
         </LocalizationProvider>
         <TextField
@@ -181,7 +181,7 @@ const AddNewPatient = () => {
           inputProps={{ inputMode: 'numeric', pattern: '[0-9]*', readOnly: dob && dob.isValid() }}
           error={!!errors.age}
           helperText={errors.age}
-          sx={{ mb: 2 }}
+          sx={{ mb: 0 }} // Reduced from mb: 2 to mb: 1
         />
         <TextField
           select
@@ -194,7 +194,7 @@ const AddNewPatient = () => {
           required
           error={!!errors.gender}
           helperText={errors.gender}
-          sx={{ mb: 2 }}
+          sx={{ mb: 0 }} // Reduced from mb: 2 to mb: 1
         >
           <MenuItem value="Male">Male</MenuItem>
           <MenuItem value="Female">Female</MenuItem>
@@ -210,7 +210,7 @@ const AddNewPatient = () => {
           type="email"
           error={!!errors.email}
           helperText={errors.email}
-          sx={{ mb: 2 }}
+          sx={{ mb: 0 }} // Reduced from mb: 2 to mb: 1
         />
         <Button
           type="submit"
@@ -220,6 +220,7 @@ const AddNewPatient = () => {
             mt: 2,
             width: '100%',
             bgcolor: '#E33610',
+            minHeight: '56px', // Aligns with TextField height
             '&:hover': { bgcolor: '#D32F0E' },
           }}
         >
