@@ -146,15 +146,24 @@ const AddNewPatient = () => {
         <TextField
           label="Name"
           value={name}
-          onChange={(e) => setName(e.target.value)}
+          onChange={(e) => {
+            const inputValue = e.target.value;
+            if (/^[a-zA-Z\s]*$/.test(inputValue)) {
+              setName(inputValue);
+              if (errors.name) setErrors((prev) => ({ ...prev, name: "" }));
+            } else {
+              setErrors((prev) => ({ ...prev, name: "Please enter only alphabetical characters." }));
+            }
+          }}
           fullWidth
           margin="normal"
           variant="outlined"
           required
           error={!!errors.name}
           helperText={errors.name}
-          sx={{ mb: 0 }} // Reduced from mb: 2 to mb: 1
+          sx={{ mb: 0 }}
         />
+
         <LocalizationProvider dateAdapter={AdapterDayjs}>
           <DateField
             label="Date of Birth"
@@ -203,15 +212,26 @@ const AddNewPatient = () => {
         <TextField
           label="Email (Optional)"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={(e) => {
+            const inputValue = e.target.value;
+            setEmail(inputValue);
+
+            // Validate email format if not empty
+            if (inputValue && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(inputValue)) {
+              setErrors((prev) => ({ ...prev, email: "Please enter a valid email address." }));
+            } else {
+              setErrors((prev) => ({ ...prev, email: "" })); // Clear error when valid
+            }
+          }}
           fullWidth
           margin="normal"
           variant="outlined"
           type="email"
           error={!!errors.email}
           helperText={errors.email}
-          sx={{ mb: 0 }} // Reduced from mb: 2 to mb: 1
+          sx={{ mb: 0 }}
         />
+
         <Button
           type="submit"
           variant="contained"
