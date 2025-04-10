@@ -312,7 +312,7 @@ const Form1 = () => {
               )}
             </TextField>
             <TextField
-              label="Phone Number"
+              label="Whatsapp Number"
               value={phoneNumber}
               onChange={handlePhoneChange}
               fullWidth
@@ -381,6 +381,26 @@ const Form1 = () => {
               }}
             >
               Verify
+            </Button>
+            <Button
+              type="submit"
+              variant="outlined"
+              disabled={isLoading}
+              sx={{
+                mt: 2,
+                width: '100%',
+                bgcolor: '#E33610',
+                borderColor: '#E33610',
+                color: 'white',
+                minHeight: '56px', // Aligns with TextField height
+                '&:hover': {
+                  borderColor: '#E33610',
+                  bgcolor: '#E33610',
+                },
+              }}
+              onClick={handleValidate}
+            >
+              Resend OTP
             </Button>
           </Box>
         )}
