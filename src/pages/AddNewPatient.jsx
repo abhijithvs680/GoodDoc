@@ -19,13 +19,25 @@ const AddNewPatient = () => {
   const { phoneNumber, countryCode, networkGDID } = location.state || {};
   const navigate = useNavigate();
 
-  const [name, setName] = useState('');
-  const [dob, setDob] = useState(null); // Date of birth using Dayjs
+  const [title, setTitle] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [surname, setSurname] = useState('');
+  const [dob, setDob] = useState(null);
   const [age, setAge] = useState('');
   const [gender, setGender] = useState('');
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [errors, setErrors] = useState({ name: '', dob: '', age: '', gender: '', email: '' });
+  const [errors, setErrors] = useState({ 
+    title: '', 
+    firstName: '', 
+    surname: '', 
+    dob: '', 
+    age: '', 
+    gender: '', 
+    email: '' 
+  });
+  
+  const titles = ["Mr.", "Mx.", "Ms."];
 
   const calculateAge = (dob) => {
     if (!dob || !dob.isValid()) return '';
@@ -34,7 +46,7 @@ const AddNewPatient = () => {
 
   const formatDobForApi = (dob) => {
     if (!dob || !dob.isValid()) return '';
-    return dob.format('DD/MM/YYYY'); // Format to 29/01/2002
+    return dob.format('DD/MM/YYYY');
   };
 
   const handleDobChange = (newValue) => {
@@ -48,13 +60,13 @@ const AddNewPatient = () => {
         setErrors((prev) => ({ ...prev, dob: '', age: '' }));
       }
     } else {
-      setAge(''); // Clear age if DOB is invalid
-      setErrors((prev) => ({ ...prev, dob: '' })); // No validation message unless after today
+      setAge('');
+      setErrors((prev) => ({ ...prev, dob: '' }));
     }
   };
 
   const handleAgeChange = (e) => {
-    if (!dob) { // Only allow age change if no DOB is set
+    if (!dob) {
       const newAge = e.target.value.replace(/\D/g, '');
       setAge(newAge);
       setErrors((prev) => ({ ...prev, age: newAge ? '' : 'Age is required if date of birth is not provided' }));
@@ -62,11 +74,27 @@ const AddNewPatient = () => {
   };
 
   const validateForm = () => {
-    const newErrors = { name: '', dob: '', age: '', gender: '', email: '' };
+    const newErrors = { 
+      title: '', 
+      firstName: '', 
+      surname: '', 
+      dob: '', 
+      age: '', 
+      gender: '', 
+      email: '' 
+    };
     let isValid = true;
 
-    if (!name.trim()) {
-      newErrors.name = 'Name is required';
+    if (!title) {
+      newErrors.title = 'Title is required';
+      isValid = false;
+    }
+    if (!firstName.trim()) {
+      newErrors.firstName = 'First name is required';
+      isValid = false;
+    }
+    if (!surname.trim()) {
+      newErrors.surname = 'Surname is required';
       isValid = false;
     }
     if (!age && !dob) {
@@ -99,11 +127,15 @@ const AddNewPatient = () => {
 
     setIsLoading(true);
     try {
-      const finalAge = dob && dob.isValid() ? calculateAge(dob) : age; // Use calculated age from DOB if provided, otherwise use entered age
-      const formattedDob = formatDobForApi(dob); // Format DOB to DD/MM/YYYY
+      const name = firstName.trim();
+      const secondname = surname.trim();
+      const nameTitle = title.trim();
+      const finalAge = dob && dob.isValid() ? calculateAge(dob) : age;
+      const formattedDob = formatDobForApi(dob);
+      
       const response = await axios.post(
         '/workflow.trigger/gdqraddnewpatient67c00f700b7fd',
-        `countryCode=${encodeURIComponent(countryCode)}&phoneNumber=${encodeURIComponent(phoneNumber)}&name=${encodeURIComponent(name)}&dob=${encodeURIComponent(formattedDob)}&age=${encodeURIComponent(finalAge)}&gender=${encodeURIComponent(gender)}&email=${encodeURIComponent(email)}&networkGDID=${encodeURIComponent(networkGDID)}`,
+        `countryCode=${encodeURIComponent(countryCode)}&phoneNumber=${encodeURIComponent(phoneNumber)}&name=${encodeURIComponent(name)}&surname=${encodeURIComponent(secondname)}&title=${encodeURIComponent(nameTitle)}&dob=${encodeURIComponent(formattedDob)}&age=${encodeURIComponent(finalAge)}&gender=${encodeURIComponent(gender)}&email=${encodeURIComponent(email)}&networkGDID=${encodeURIComponent(networkGDID)}`,
         {
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
@@ -144,23 +176,67 @@ const AddNewPatient = () => {
       </Box>
       <Box component="form" onSubmit={handleSubmit} sx={{ p: 3 }}>
         <TextField
-          label="Name"
-          value={name}
+          select
+          label="Title"
+          value={title}
+          onChange={(e) => {
+            setTitle(e.target.value);
+            if (errors.title) setErrors((prev) => ({ ...prev, title: "" }));
+          }}
+          fullWidth
+          margin="normal"
+          variant="outlined"
+          required
+          error={!!errors.title}
+          helperText={errors.title}
+          sx={{ mb: 0 }}
+        >
+          {titles.map((option) => (
+            <MenuItem key={option} value={option}>
+              {option}
+            </MenuItem>
+          ))}
+        </TextField>
+        
+        <TextField
+          label="First Name"
+          value={firstName}
           onChange={(e) => {
             const inputValue = e.target.value;
             if (/^[a-zA-Z\s]*$/.test(inputValue)) {
-              setName(inputValue);
-              if (errors.name) setErrors((prev) => ({ ...prev, name: "" }));
+              setFirstName(inputValue);
+              if (errors.firstName) setErrors((prev) => ({ ...prev, firstName: "" }));
             } else {
-              setErrors((prev) => ({ ...prev, name: "Please enter only alphabetical characters." }));
+              setErrors((prev) => ({ ...prev, firstName: "Please enter only alphabetical characters." }));
             }
           }}
           fullWidth
           margin="normal"
           variant="outlined"
           required
-          error={!!errors.name}
-          helperText={errors.name}
+          error={!!errors.firstName}
+          helperText={errors.firstName}
+          sx={{ mb: 0 }}
+        />
+        
+        <TextField
+          label="Surname"
+          value={surname}
+          onChange={(e) => {
+            const inputValue = e.target.value;
+            if (/^[a-zA-Z\s]*$/.test(inputValue)) {
+              setSurname(inputValue);
+              if (errors.surname) setErrors((prev) => ({ ...prev, surname: "" }));
+            } else {
+              setErrors((prev) => ({ ...prev, surname: "Please enter only alphabetical characters." }));
+            }
+          }}
+          fullWidth
+          margin="normal"
+          variant="outlined"
+          required
+          error={!!errors.surname}
+          helperText={errors.surname}
           sx={{ mb: 0 }}
         />
 
@@ -169,15 +245,16 @@ const AddNewPatient = () => {
             label="Date of Birth"
             value={dob}
             onChange={handleDobChange}
-            format="DD/MM/YYYY" // Display and input as 29/01/2002
+            format="DD/MM/YYYY"
             fullWidth
             margin="normal"
             variant="outlined"
             error={!!errors.dob}
             helperText={errors.dob}
-            sx={{ mb: 0 }} // Reduced from mb: 2 to mb: 1
+            sx={{ mb: 0 }}
           />
         </LocalizationProvider>
+        
         <TextField
           label="Age"
           value={age}
@@ -190,8 +267,9 @@ const AddNewPatient = () => {
           inputProps={{ inputMode: 'numeric', pattern: '[0-9]*', readOnly: dob && dob.isValid() }}
           error={!!errors.age}
           helperText={errors.age}
-          sx={{ mb: 0 }} // Reduced from mb: 2 to mb: 1
+          sx={{ mb: 0 }}
         />
+        
         <TextField
           select
           label="Gender"
@@ -203,24 +281,23 @@ const AddNewPatient = () => {
           required
           error={!!errors.gender}
           helperText={errors.gender}
-          sx={{ mb: 0 }} // Reduced from mb: 2 to mb: 1
+          sx={{ mb: 0 }}
         >
           <MenuItem value="Male">Male</MenuItem>
           <MenuItem value="Female">Female</MenuItem>
           <MenuItem value="Others">Others</MenuItem>
         </TextField>
+        
         <TextField
           label="Email (Optional)"
           value={email}
           onChange={(e) => {
             const inputValue = e.target.value;
             setEmail(inputValue);
-
-            // Validate email format if not empty
             if (inputValue && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(inputValue)) {
               setErrors((prev) => ({ ...prev, email: "Please enter a valid email address." }));
             } else {
-              setErrors((prev) => ({ ...prev, email: "" })); // Clear error when valid
+              setErrors((prev) => ({ ...prev, email: "" }));
             }
           }}
           fullWidth
@@ -240,13 +317,14 @@ const AddNewPatient = () => {
             mt: 2,
             width: '100%',
             bgcolor: '#E33610',
-            minHeight: '56px', // Aligns with TextField height
+            minHeight: '56px',
             '&:hover': { bgcolor: '#D32F0E' },
           }}
         >
           {isLoading ? <CircularProgress size={24} sx={{ color: 'white' }} /> : 'Submit'}
         </Button>
       </Box>
+      
       {isLoading && (
         <Box
           sx={{
