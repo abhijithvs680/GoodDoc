@@ -37,7 +37,7 @@ const AddNewPatient = () => {
     email: '' 
   });
   
-  const titles = ["Mr.", "Mx.", "Ms."];
+  const titles = ["Mr", "Mrs", "Miss", "Mst"];
 
   const calculateAge = (dob) => {
     if (!dob || !dob.isValid()) return '';
