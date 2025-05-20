@@ -47,7 +47,7 @@ const ShowExistingPatients = () => {
     setIsLoading(true);
     try {
       const response = await axios.post(
-        '/workflow.trigger/gdqrselectpatient67bff515ad723',
+        'workflow.trigger/gdqrselectpatient67bff515ad723',
         `patientGDID=${encodeURIComponent(patient.PatientGDID)}&networkGDID=${encodeURIComponent(networkGDID)}`,
         {
           headers: {
@@ -78,27 +78,26 @@ const ShowExistingPatients = () => {
       maxWidth="sm" 
       sx={{ 
         bgcolor: '#F5F7FA',
-        minHeight: '100vh', 
         display: 'flex', 
         flexDirection: 'column', 
         p: 0 
       }}
     >
-      <Box sx={{ mb: -2, textAlign: 'center', p: 3 }}>
+      {/* Title */}
+      <Box sx={{ mb: 1, textAlign: 'left', mt: 2, px: 1 }}>
         <Typography 
           variant="h4" 
           sx={{ 
-            fontWeight: 500, 
+            fontWeight: 'bold', 
             color: '#333', 
-            fontSize: '1.5rem', 
-            mb: 2 
+            fontSize: '0.8rem',
           }}
         >
-          Select a Patient
+          Select Patient
         </Typography>
       </Box>
 
-      <Box sx={{ p: 3 }}>
+      <Box sx={{ px: 1, pb: 3, flexGrow: 1 }}>
         {patients.length > 0 ? (
           patients.map((patient) => (
             <Card 
@@ -106,79 +105,130 @@ const ShowExistingPatients = () => {
               sx={{ 
                 mb: 2, 
                 bgcolor: '#FFFFFF', 
-                borderRadius: 1,
+                borderRadius: '12px', // Rounded corners to match the image
                 cursor: 'pointer',
-                '&:hover': { bgcolor: '#c8c8c8' }
+                border: '1px solid #e0e0e0', // Light gray border
+                boxShadow: 'none', // Remove default shadow
+                '&:hover': { bgcolor: '#F5F7FA' } // Lighter gray on hover
               }}
               onClick={() => handlePatientClick(patient)}
             >
-              <CardContent sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 2 }}>
+              <CardContent 
+                sx={{ 
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  alignItems: 'center', 
+                  p: 2,
+                  '&:last-child': { pb: 2 }, // Ensure consistent padding
+                }}
+              >
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  {/* Avatar */}
                   <Box 
                     component="div" 
                     sx={{ 
-                      width: 40, 
-                      height: 40, 
-                      bgcolor: '#909191',
+                      width: 48, 
+                      height: 48, 
+                      bgcolor: '#FF8A65', // Coral color for the avatar
                       borderRadius: '50%',
                       marginRight: 2,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       color: '#FFF',
-                      fontSize: '1rem',
-                      minWidth: 40,
-                      minHeight: 40,
+                      fontSize: '1.2rem',
+                      fontWeight: 'bold',
+                      minWidth: 48,
+                      minHeight: 48,
                     }}
                   >
-                    {patient.Name.charAt(0)}
+                    {patient.Name.charAt(0).toUpperCase()}
                   </Box>
-                  <Typography 
-                    variant="body1" 
-                    sx={{ 
-                      color: '#333', 
-                      fontSize: '1rem' 
-                    }}
-                  >
-                    {patient.Name} - {patient.Age} Years - {patient.Gender}
-                  </Typography>
+                  {/* Patient Details */}
+                  <Box>
+                    <Typography 
+                      variant="body1" 
+                      sx={{ 
+                        color: '#333', 
+                        fontSize: '1rem',
+                        fontWeight: 'bold',
+                      }}
+                    >
+                      {patient.Name}
+                    </Typography>
+                    <Typography 
+                      variant="body2" 
+                      sx={{ 
+                        color: '#666', 
+                        fontSize: '0.9rem',
+                      }}
+                    >
+                      {patient.Age}Y - {patient.Gender}
+                    </Typography>
+                  </Box>
                 </Box>
-                <IconButton aria-label="navigate" sx={{ color: 'rgb(0, 0, 0)' }}>
-                  <ArrowForwardIcon />
+                {/* Forward Arrow */}
+                <IconButton 
+                  aria-label="navigate" 
+                  sx={{ 
+                    color: '#333',
+                    bgcolor: '#E0E0E0', // Light gray background for the icon
+                    borderRadius: '50%',
+                    width: 32,
+                    height: 32,
+                    '&:hover': { bgcolor: '#D0D0D0' },
+                  }}
+                >
+                  <ArrowForwardIcon sx={{ fontSize: '1.2rem' }} />
                 </IconButton>
               </CardContent>
             </Card>
           ))
         ) : (
-          <Typography variant="body1" sx={{ color: '#333', textAlign: 'center', mb: 2 }}>
+          <Typography 
+            variant="body1" 
+            sx={{ 
+              color: '#333', 
+              textAlign: 'center', 
+              mb: 2,
+              fontSize: '1rem',
+            }}
+          >
             No patients available.
           </Typography>
         )}
 
+        {/* OR Separator */}
         <Typography 
           variant="body1" 
           sx={{ 
             textAlign: 'center', 
-            color: '#333', 
+            color: '#000',
             mb: 2, 
-            fontSize: '1rem' 
+            fontSize: '1rem',
+
           }}
         >
           OR
         </Typography>
 
+        {/* Add New Patient Button */}
         <Button 
           variant="outlined"
           onClick={handleAddNewPatient}
           sx={{ 
             width: '100%', 
             borderColor: '#E33610',
-            bgcolor: '#E33610',
-            color: 'white',
-            minHeight: '56px', // Aligns with TextField height
+            color: '#E33610',
+            bgcolor: 'transparent', // Transparent background for outlined button
+            minHeight: '48px', // Adjusted height to match the image
+            textTransform: 'none', // Match the case in the image
+            fontWeight: 'bold',
+            borderRadius: '8px', // Rounded corners
             '&:hover': {
-              borderColor: '#E33610',
-              bgcolor: '#E33610',
+              borderColor: '#C62800', // Darker red on hover
+              color: '#C62800',
+              bgcolor: 'transparent',
             },
           }}
         >
@@ -186,6 +236,7 @@ const ShowExistingPatients = () => {
         </Button>
       </Box>
 
+      {/* Loading Overlay */}
       {isLoading && (
         <Box sx={{ 
           position: 'fixed', 

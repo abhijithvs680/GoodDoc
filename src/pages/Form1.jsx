@@ -8,12 +8,15 @@ import {
   CircularProgress,
   Typography,
   InputAdornment,
+  Card,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { parsePhoneNumberFromString, getCountryCallingCode, getCountries } from 'libphonenumber-js';
 import ReactCountryFlag from 'react-country-flag';
+import VerifiedIcon from '@mui/icons-material/Verified';
+import CheckIcon from '@mui/icons-material/Check';
 
 const Form1 = () => {
   const [countryCode, setCountryCode] = useState('ZW');
@@ -25,6 +28,7 @@ const Form1 = () => {
   const [showOTP, setShowOTP] = useState(false);
   const [otp, setOtp] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [doctorInfo, setDoctorInfo] = useState(null);
   const inputRef = useRef(null);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -32,6 +36,27 @@ const Form1 = () => {
   const logrowId = searchParams.get('rowid');
 
   useEffect(() => {
+    const fetchDoctorInfo = async () => {
+      if (networkGDID) {
+        try {
+          const response = await axios.post(
+            'workflow.trigger/gdgetnetworkinfobygdidqr6828543b975ac',
+            `networkGDID=${encodeURIComponent(networkGDID)}`,
+            {
+              headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+              },
+            }
+          );
+          if (response.data && response.data.length > 0) {
+            setDoctorInfo(response.data[0]);
+          }
+        } catch (error) {
+          console.error('Error fetching doctor info:', error);
+        }
+      }
+    };
+
     const countryList = getCountries().map((code) => {
       const callingCode = getCountryCallingCode(code);
       return {
@@ -42,13 +67,13 @@ const Form1 = () => {
     });
     setCountries(countryList);
     setFilteredCountries(countryList);
-  }, []);
+    fetchDoctorInfo();
+  }, [networkGDID]);
 
   const handleCountryChange = (event) => {
     setCountryCode(event.target.value);
     setPhoneNumber('');
     setIsValidPhone(true);
-    // Reset search when an item is selected
     setSearchQuery('');
     setFilteredCountries(countries);
   };
@@ -65,7 +90,7 @@ const Form1 = () => {
     event.stopPropagation();
     const query = event.target.value.toLowerCase();
     setSearchQuery(query);
-    
+
     const filtered = countries.filter(
       (country) =>
         country.name.toLowerCase().includes(query) ||
@@ -75,7 +100,6 @@ const Form1 = () => {
   };
 
   const handleSearchClick = (event) => {
-    // Prevent the select dropdown from closing when clicking in search field
     event.stopPropagation();
   };
 
@@ -90,7 +114,7 @@ const Form1 = () => {
     try {
       const numericPhoneNumber = phoneNumber.replace(/\D/g, '');
       const response = await axios.post(
-        '/workflow.trigger/generateotpforanynumber67bfffa9eefd4',
+        'workflow.trigger/generateotpforanynumber67bfffa9eefd4',
         `phone=${encodeURIComponent(numericPhoneNumber)}&action=generate&countryCode=${encodeURIComponent(getCountryCallingCode(countryCode))}`,
         {
           headers: {
@@ -131,7 +155,7 @@ const Form1 = () => {
     setIsLoading(true);
     try {
       const otpResponse = await axios.post(
-        '/workflow.trigger/checkotpforallnumbers67c186f9b4a64',
+        'workflow.trigger/checkotpforallnumbers67c186f9b4a64',
         `OTP=${encodeURIComponent(otp)}&phone=${encodeURIComponent(numericPhoneNumber)}`,
         {
           headers: {
@@ -143,7 +167,7 @@ const Form1 = () => {
         const networkGDIDValue = networkGDID;
         const logrowIdValue = logrowId;
         const submissionResponse = await axios.post(
-          '/workflow.trigger/gdrecieveqrcodeformsubmit67b3210bc2752',
+          'workflow.trigger/gdrecieveqrcodeformsubmit67b3210bc2752',
           `phoneNumber=${encodeURIComponent(numericPhoneNumber)}&networkGDID=${encodeURIComponent(networkGDIDValue)}&logRowID=${encodeURIComponent(logrowIdValue)}`,
           {
             headers: {
@@ -186,28 +210,146 @@ const Form1 = () => {
       maxWidth="sm"
       sx={{
         bgcolor: '#F5F7FA',
-        minHeight: '100vh',
         display: 'flex',
         flexDirection: 'column',
         p: 0,
         position: 'relative',
       }}
     >
-      <Box sx={{ mb: -2, textAlign: 'center', p: 3 }}>
-        <Typography
-          variant="h5"
+      <Box sx={{ p: 1, textAlign: 'center' }}>
+
+        {doctorInfo && (
+          <Card
           sx={{
-            fontWeight: 500,
-            color: '#333',
-            fontSize: '1.25rem',
+            mb: 1.5,
+            borderRadius: '15px',
+            boxShadow: 'none',
+            border: 'none',
+            background: 'linear-gradient(90deg, rgba(255, 175, 146, 1) 0%, rgba(255, 204, 146, 1) 100%)', // Gradient background
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            display: 'flex',
+            alignItems: 'center',
+            padding: '10px 15px',
+            height: '85px',
+            position: 'relative', // For the pseudo-element positioning
+            overflow: 'hidden', // Match overflow-hidden
+            '&::before': { // Replicate the circle-bg div using ::before pseudo-element
+              content: '""',
+              position: 'absolute',
+              zIndex: 10,
+              right: '-37px',
+              top: 0,
+              opacity: 0.1,
+              backgroundImage: `url('https://static.vizru.com/good-doc/images/circle.svg')`,
+              width: '100%',
+              height: '100%',
+              backgroundRepeat: 'no-repeat',
+              backgroundPosition: 'right',
+              backgroundSize: '41%',
+            },
           }}
         >
-          Delivering Faster, Smarter, and Affordable Medical Care for all.
-        </Typography>
-      </Box>
-      <Box sx={{ p: 3 }}>
+          {/* Doctor Icon */}
+          <Box
+            sx={{
+              width: 50,
+              height: 50,
+              borderRadius: '25px',
+              backgroundColor: '#E6F0FA',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              mr: 2,
+            }}
+          >
+            <img
+              src="https://static.vizru.com/good-doc/images/doctor.png"
+              alt="Doctor Icon"
+              style={{
+                width: '100%',
+                height: '100%',
+                borderRadius: '50%',
+                objectFit: 'contain',
+              }}
+            />
+          </Box>
+          {/* Text Content */}
+          <Box sx={{ flex: 1, textAlign: 'left' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: '' }}>
+              <Typography
+                variant="h6"
+                sx={{
+                  fontWeight: 'bold',
+                  fontSize: '1rem',
+                  color: '#000',
+                }}
+              >
+                {doctorInfo.Title} {doctorInfo.Name} {doctorInfo.Surname}
+              </Typography>
+              <Box sx={{ marginLeft: 0.3, position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                <VerifiedIcon
+                  sx={{
+                    fontSize: 17,
+                    color: '#F44336',
+                    borderRadius: '50%',
+                    background: 'radial-gradient(circle, #F44336 0%, transparent 70%)',
+                  }}
+                />
+                <CheckIcon
+                  sx={{
+                    position: 'absolute',
+                    fontSize: 10,
+                    color: '#FFFFFF',
+                    fontWeight: 'bold',
+                  }}
+                />
+              </Box>
+            </Box>
+            <Typography
+              variant="body2"
+              sx={{
+                color: '#000',
+                fontSize: '0.9rem',
+              }}
+            >
+              {doctorInfo.Specialization}
+            </Typography>
+            <Typography
+              variant="body2"
+              sx={{
+                color: '#000',
+                fontSize: '0.9rem',
+              }}
+            >
+              {doctorInfo.Organisation} | {doctorInfo.Region}
+            </Typography>
+          </Box>
+        </Card>
+        )}
+
+
+
+
         {!showOTP ? (
-          <Box component="form" onSubmit={(e) => { e.preventDefault(); handleValidate(); }}>
+          <Box
+            component="form"
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleValidate();
+            }}
+            sx={{
+              backgroundColor: 'white',
+              padding: '15px',
+              borderRadius: '10px',
+              paddingTop: '30px',
+              paddingBottom: '40px',
+            }}
+          >
+            <Typography variant="body1" sx={{ textAlign: 'left', mb: 1, fontWeight: 'medium', fontSize: '1.7rem', }}>
+              Sign in to <br></br> get started
+            </Typography>
+
             <TextField
               select
               label="Country Code"
@@ -226,22 +368,18 @@ const Form1 = () => {
                       maxHeight: 300,
                     },
                     sx: {
-                      // This ensures the menu width matches the input field
                       '& .MuiMenu-list': {
                         width: '100%',
                       },
                       '& .MuiMenu-paper': {
                         width: 'auto',
                       },
-                      // Match the width of the input field
                       width: inputRef?.current?.clientWidth,
                     }
                   },
-                  // Ensure dropdown closes when item is selected
                   autoClose: true,
                   disableAutoFocus: false,
                   disableEnforceFocus: false,
-                  // Match the width of the trigger element
                   anchorOrigin: {
                     vertical: 'bottom',
                     horizontal: 'left',
@@ -263,17 +401,17 @@ const Form1 = () => {
               }}
             >
               {/* Fixed Search Box */}
-              <Box 
-                sx={{ 
-                  p: 1, 
-                  position: 'sticky', 
-                  top: 0, 
-                  bgcolor: 'white', 
+              <Box
+                sx={{
+                  p: 1,
+                  position: 'sticky',
+                  top: 0,
+                  bgcolor: 'white',
                   zIndex: 1,
                   borderBottom: '1px solid #e0e0e0',
                   width: 'auto',
                 }}
-                
+
                 onClick={handleSearchClick}
               >
                 <TextField
@@ -290,7 +428,7 @@ const Form1 = () => {
                         <SearchIcon />
                       </InputAdornment>
                     ),
-                    sx: { 
+                    sx: {
                       height: '40px',
                       fontSize: '0.875rem'
                     }
@@ -298,7 +436,7 @@ const Form1 = () => {
                   size="small"
                 />
               </Box>
-              
+
               {/* Filtered Countries */}
               {filteredCountries.length > 0 ? (
                 filteredCountries.map((country) => (
@@ -311,6 +449,7 @@ const Form1 = () => {
                 <MenuItem disabled sx={{ width: '100%' }}>No countries match your search</MenuItem>
               )}
             </TextField>
+
             <TextField
               label="Whatsapp Number"
               value={phoneNumber}
@@ -327,32 +466,32 @@ const Form1 = () => {
                   ? `Invalid phone number for ${countryCode}`
                   : ''
               }
-              sx={{ mb: 0 }}
+              sx={{ mb: 2 }}
             />
+
             <Button
               type="submit"
-              variant="outlined"
+              variant="contained"
               disabled={isLoading}
               sx={{
-                mt: 2,
                 width: '100%',
                 bgcolor: '#E33610',
-                borderColor: '#E33610',
                 color: 'white',
-                minHeight: '56px', // Aligns with TextField height
+                py: 1.5,
                 '&:hover': {
-                  borderColor: '#E33610',
-                  bgcolor: '#E33610',
+                  bgcolor: '#C02E0D',
                 },
               }}
             >
-              Validate
+              {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Continue'}
             </Button>
           </Box>
         ) : (
           <Box component="form" onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
+            <Typography variant="body1" sx={{ textAlign: 'left', mb: 1, fontWeight: 'medium' }}>
+              Enter OTP
+            </Typography>
             <TextField
-              label="Enter OTP"
               value={otp}
               onChange={handleOtpChange}
               fullWidth
@@ -360,42 +499,38 @@ const Form1 = () => {
               variant="outlined"
               required
               type="tel"
+              placeholder="OTP"
               inputProps={{ inputMode: 'numeric', pattern: '[0-9]*' }}
-              sx={{ mb: 0 }}
+              sx={{ mb: 3 }}
             />
+
             <Button
               type="submit"
-              variant="outlined"
+              variant="contained"
               disabled={isLoading}
               sx={{
-                mt: 2,
                 width: '100%',
                 bgcolor: '#E33610',
-                borderColor: '#E33610',
                 color: 'white',
-                minHeight: '56px', // Aligns with TextField height
+                py: 1.5,
+                mb: 2,
                 '&:hover': {
-                  borderColor: '#E33610',
-                  bgcolor: '#E33610',
+                  bgcolor: '#C02E0D',
                 },
               }}
             >
-              Verify
+              {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Verify'}
             </Button>
+
             <Button
-              type="submit"
-              variant="outlined"
+              variant="text"
               disabled={isLoading}
               sx={{
-                mt: 2,
                 width: '100%',
-                bgcolor: '#E33610',
-                borderColor: '#E33610',
-                color: 'white',
-                minHeight: '56px', // Aligns with TextField height
+                color: '#E33610',
+                py: 1.5,
                 '&:hover': {
-                  borderColor: '#E33610',
-                  bgcolor: '#E33610',
+                  bgcolor: 'transparent',
                 },
               }}
               onClick={handleValidate}
@@ -404,7 +539,10 @@ const Form1 = () => {
             </Button>
           </Box>
         )}
+
+
       </Box>
+
       {isLoading && (
         <Box
           sx={{
