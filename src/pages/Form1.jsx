@@ -19,6 +19,8 @@ import VerifiedIcon from '@mui/icons-material/Verified';
 import CheckIcon from '@mui/icons-material/Check';
 
 const Form1 = () => {
+  // New state to manage the initial page load
+  const [isPageLoading, setIsPageLoading] = useState(true);
   const [countryCode, setCountryCode] = useState('ZW');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isValidPhone, setIsValidPhone] = useState(true);
@@ -37,23 +39,31 @@ const Form1 = () => {
 
   useEffect(() => {
     const fetchDoctorInfo = async () => {
-      if (networkGDID) {
-        try {
-          const response = await axios.post(
-            'workflow.trigger/gdgetnetworkinfobygdidqr6828543b975ac',
-            `networkGDID=${encodeURIComponent(networkGDID)}`,
-            {
-              headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-              },
-            }
-          );
-          if (response.data && response.data.length > 0) {
-            setDoctorInfo(response.data[0]);
+      // If there's no networkGDID, don't bother fetching and just load the page.
+      if (!networkGDID) {
+        setIsPageLoading(false);
+        return;
+      }
+
+      try {
+        const response = await axios.post(
+          '/workflow.trigger/gdgetnetworkinfobygdidqr6828543b975ac',
+          `networkGDID=${encodeURIComponent(networkGDID)}`,
+          {
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
           }
-        } catch (error) {
-          console.error('Error fetching doctor info:', error);
+        );
+        if (response.data && response.data.length > 0) {
+          setDoctorInfo(response.data[0]);
         }
+      } catch (error) {
+        console.error('Error fetching doctor info:', error);
+        // Handle the error as needed, e.g., show an error message.
+      } finally {
+        // Set page loading to false once the API call is complete (either success or error)
+        setIsPageLoading(false);
       }
     };
 
@@ -70,141 +80,161 @@ const Form1 = () => {
     fetchDoctorInfo();
   }, [networkGDID]);
 
-  const handleCountryChange = (event) => {
-    setCountryCode(event.target.value);
-    setPhoneNumber('');
-    setIsValidPhone(true);
-    setSearchQuery('');
-    setFilteredCountries(countries);
-  };
 
-  const handlePhoneChange = (event) => {
-    const value = event.target.value.replace(/\D/g, '');
-    setPhoneNumber(value);
-    const phoneNumberWithCountryCode = `+${getCountryCallingCode(countryCode)}${value}`;
-    const phoneNumberObj = parsePhoneNumberFromString(phoneNumberWithCountryCode);
-    setIsValidPhone(phoneNumberObj?.isValid() || false);
-  };
+    // Handlers remain the same
+    const handleCountryChange = (event) => {
+        setCountryCode(event.target.value);
+        setPhoneNumber('');
+        setIsValidPhone(true);
+        setSearchQuery('');
+        setFilteredCountries(countries);
+    };
 
-  const handleSearchChange = (event) => {
-    event.stopPropagation();
-    const query = event.target.value.toLowerCase();
-    setSearchQuery(query);
+    const handlePhoneChange = (event) => {
+        const value = event.target.value.replace(/\D/g, '');
+        setPhoneNumber(value);
+        const phoneNumberWithCountryCode = `+${getCountryCallingCode(countryCode)}${value}`;
+        const phoneNumberObj = parsePhoneNumberFromString(phoneNumberWithCountryCode);
+        setIsValidPhone(phoneNumberObj?.isValid() || false);
+    };
 
-    const filtered = countries.filter(
-      (country) =>
-        country.name.toLowerCase().includes(query) ||
-        country.callingCode.toLowerCase().includes(query)
-    );
-    setFilteredCountries(filtered);
-  };
+    const handleSearchChange = (event) => {
+        event.stopPropagation();
+        const query = event.target.value.toLowerCase();
+        setSearchQuery(query);
 
-  const handleSearchClick = (event) => {
-    event.stopPropagation();
-  };
-
-  const handleValidate = async () => {
-    const phoneNumberWithCountryCode = `+${getCountryCallingCode(countryCode)}${phoneNumber}`;
-    const phoneNumberObj = parsePhoneNumberFromString(phoneNumberWithCountryCode);
-    if (!phoneNumberObj?.isValid()) {
-      alert('Please enter a valid phone number.');
-      return;
-    }
-    setIsLoading(true);
-    try {
-      const numericPhoneNumber = phoneNumber.replace(/\D/g, '');
-      const response = await axios.post(
-        'workflow.trigger/generateotpforanynumber67bfffa9eefd4',
-        `phone=${encodeURIComponent(numericPhoneNumber)}&action=generate&countryCode=${encodeURIComponent(getCountryCallingCode(countryCode))}`,
-        {
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-        }
-      );
-      if (Array.isArray(response.data) && response.data.length > 0) {
-        const apiResponse = response.data[0];
-        if (apiResponse.error === "False") {
-          setShowOTP(true);
-        } else if (apiResponse.error === "True") {
-          alert('Failed to send OTP. Please check your phone number and try again.');
-        } else {
-          alert('Unexpected API response. Please try again.');
-        }
-      } else {
-        alert('Invalid API response format. Please try again.');
-      }
-    } catch (error) {
-      alert('Failed to generate OTP. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleOtpChange = (event) => {
-    const value = event.target.value.replace(/\D/g, '');
-    setOtp(value);
-  };
-
-  const handleSubmit = async () => {
-    const numericPhoneNumber = phoneNumber.replace(/\D/g, '');
-    if (!otp) {
-      alert('Please enter the OTP.');
-      return;
-    }
-    setIsLoading(true);
-    try {
-      const otpResponse = await axios.post(
-        'workflow.trigger/checkotpforallnumbers67c186f9b4a64',
-        `OTP=${encodeURIComponent(otp)}&phone=${encodeURIComponent(numericPhoneNumber)}`,
-        {
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-        }
-      );
-      if (otpResponse.data[0].error === "false") {
-        const networkGDIDValue = networkGDID;
-        const logrowIdValue = logrowId;
-        const submissionResponse = await axios.post(
-          'workflow.trigger/gdrecieveqrcodeformsubmit67b3210bc2752',
-          `phoneNumber=${encodeURIComponent(numericPhoneNumber)}&networkGDID=${encodeURIComponent(networkGDIDValue)}&logRowID=${encodeURIComponent(logrowIdValue)}`,
-          {
-            headers: {
-              'Content-Type': 'application/x-www-form-urlencoded',
-            },
-          }
+        const filtered = countries.filter(
+            (country) =>
+                country.name.toLowerCase().includes(query) ||
+                country.callingCode.toLowerCase().includes(query)
         );
-        const numericCountryCode = getCountryCallingCode(countryCode);
+        setFilteredCountries(filtered);
+    };
 
-        if (submissionResponse.data[0].PatientExistFlag === "true") {
-          navigate(`/showexistingpatients`, {
-            state: {
-              state: { response: submissionResponse.data },
-              networkGDID: networkGDIDValue,
-              phoneNumber: numericPhoneNumber,
-              countryCode: numericCountryCode,
-            },
-          });
-        } else {
-          navigate(`/add-new-patient`, {
-            state: {
-              phoneNumber: numericPhoneNumber,
-              networkGDID: networkGDIDValue,
-              countryCode: numericCountryCode,
-            },
-          });
+    const handleSearchClick = (event) => {
+        event.stopPropagation();
+    };
+
+    const handleValidate = async () => {
+        const phoneNumberWithCountryCode = `+${getCountryCallingCode(countryCode)}${phoneNumber}`;
+        const phoneNumberObj = parsePhoneNumberFromString(phoneNumberWithCountryCode);
+        if (!phoneNumberObj?.isValid()) {
+            alert('Please enter a valid phone number.');
+            return;
         }
-      } else {
-        alert('Invalid OTP. Please try again.');
-      }
-    } catch (error) {
-      alert('Failed to verify OTP or submit. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+        setIsLoading(true);
+        try {
+            const numericPhoneNumber = phoneNumber.replace(/\D/g, '');
+            const response = await axios.post(
+                '/workflow.trigger/generateotpforanynumber67bfffa9eefd4',
+                `phone=${encodeURIComponent(numericPhoneNumber)}&action=generate&countryCode=${encodeURIComponent(getCountryCallingCode(countryCode))}`,
+                {
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                }
+            );
+            if (Array.isArray(response.data) && response.data.length > 0) {
+                const apiResponse = response.data[0];
+                if (apiResponse.error === "False") {
+                    setShowOTP(true);
+                } else if (apiResponse.error === "True") {
+                    alert('Failed to send OTP. Please check your phone number and try again.');
+                } else {
+                    alert('Unexpected API response. Please try again.');
+                }
+            } else {
+                alert('Invalid API response format. Please try again.');
+            }
+        } catch (error) {
+            alert('Failed to generate OTP. Please try again.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
+    const handleOtpChange = (event) => {
+        const value = event.target.value.replace(/\D/g, '');
+        setOtp(value);
+    };
+
+    const handleSubmit = async () => {
+        const numericPhoneNumber = phoneNumber.replace(/\D/g, '');
+        if (!otp) {
+            alert('Please enter the OTP.');
+            return;
+        }
+        setIsLoading(true);
+        try {
+            const otpResponse = await axios.post(
+                '/workflow.trigger/checkotpforallnumbers67c186f9b4a64',
+                `OTP=${encodeURIComponent(otp)}&phone=${encodeURIComponent(numericPhoneNumber)}`,
+                {
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                }
+            );
+            if (otpResponse.data[0].error === "false") {
+                const networkGDIDValue = networkGDID;
+                const logrowIdValue = logrowId;
+                const submissionResponse = await axios.post(
+                    '/workflow.trigger/gdrecieveqrcodeformsubmit67b3210bc2752',
+                    `phoneNumber=${encodeURIComponent(numericPhoneNumber)}&networkGDID=${encodeURIComponent(networkGDIDValue)}&logRowID=${encodeURIComponent(logrowIdValue)}`,
+                    {
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                    }
+                );
+                const numericCountryCode = getCountryCallingCode(countryCode);
+
+                if (submissionResponse.data[0].PatientExistFlag === "true") {
+                    navigate(`/showexistingpatients`, {
+                        state: {
+                            state: { response: submissionResponse.data },
+                            networkGDID: networkGDIDValue,
+                            phoneNumber: numericPhoneNumber,
+                            countryCode: numericCountryCode,
+                        },
+                    });
+                } else {
+                    navigate(`/add-new-patient`, {
+                        state: {
+                            phoneNumber: numericPhoneNumber,
+                            networkGDID: networkGDIDValue,
+                            countryCode: numericCountryCode,
+                        },
+                    });
+                }
+            } else {
+                alert('Invalid OTP. Please try again.');
+            }
+        } catch (error) {
+            alert('Failed to verify OTP or submit. Please try again.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+
+  // Render a loading spinner while the page is loading
+  if (isPageLoading) {
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100vh',
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  // Render the form once the data is fetched
   return (
     <Container
       maxWidth="sm"

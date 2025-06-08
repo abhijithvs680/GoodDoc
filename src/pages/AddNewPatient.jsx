@@ -151,7 +151,7 @@ const AddNewPatient = () => {
       const formattedDob = formatDobForApi(dob);
 
       const response = await axios.post(
-        'workflow.trigger/gdqraddnewpatient67c00f700b7fd',
+        '/workflow.trigger/gdqraddnewpatient67c00f700b7fd',
         `countryCode=${encodeURIComponent(countryCode)}&phoneNumber=${encodeURIComponent(phoneNumber)}&name=${encodeURIComponent(name)}&surname=${encodeURIComponent(secondname)}&title=${encodeURIComponent(nameTitle)}&dob=${encodeURIComponent(formattedDob)}&age=${encodeURIComponent(finalAge)}&gender=${encodeURIComponent(gender)}&email=${encodeURIComponent(email)}&networkGDID=${encodeURIComponent(networkGDID)}`,
         {
           headers: {

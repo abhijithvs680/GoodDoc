@@ -78,7 +78,7 @@ const Booking = () => {
 
     try {
       const response = await axios.post(
-        'workflow.trigger/gdqrappoinmentrequestreciver67b6d8cb139ad',
+        '/workflow.trigger/gdqrappoinmentrequestreciver67b6d8cb139ad',
         `patientGDID=${encodeURIComponent(patientGDID || '')}&networkGDID=${encodeURIComponent(networkGDID || '')}&details=${encodeURIComponent(medicalHistoryDetails)}&historyShare=${encodeURIComponent(shareMedicalHistory.toString())}&btnText=RequestAppointment`,
         {
           headers: {
@@ -110,7 +110,7 @@ const Booking = () => {
   const handleShareMedicalHistory = async () => {
     try {
       const response = await axios.post(
-        'workflow.trigger/gdqrappoinmentrequestreciver67b6d8cb139ad',
+        '/workflow.trigger/gdqrappoinmentrequestreciver67b6d8cb139ad',
         `patientGDID=${encodeURIComponent(patientGDID || '')}&networkGDID=${encodeURIComponent(networkGDID || '')}&btnText=ShareMedicalHistory`,
         {
           headers: {
@@ -133,7 +133,7 @@ const Booking = () => {
   const handleUnshareMedicalHistory = async () => {
     try {
       const response = await axios.post(
-        'workflow.trigger/gdqrappoinmentrequestreciver67b6d8cb139ad',
+        '/workflow.trigger/gdqrappoinmentrequestreciver67b6d8cb139ad',
         `patientGDID=${encodeURIComponent(patientGDID || '')}&networkGDID=${encodeURIComponent(networkGDID || '')}&btnText=UnshareMedicalHistory`,
         {
           headers: {

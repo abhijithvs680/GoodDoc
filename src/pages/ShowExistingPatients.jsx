@@ -47,7 +47,7 @@ const ShowExistingPatients = () => {
     setIsLoading(true);
     try {
       const response = await axios.post(
-        'workflow.trigger/gdqrselectpatient67bff515ad723',
+        '/workflow.trigger/gdqrselectpatient67bff515ad723',
         `patientGDID=${encodeURIComponent(patient.PatientGDID)}&networkGDID=${encodeURIComponent(networkGDID)}`,
         {
           headers: {
