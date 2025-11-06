@@ -28,33 +28,43 @@ const AddNewPatient = () => {
   const [firstName, setFirstName] = useState('');
   const [surname, setSurname] = useState('');
   const [dob, setDob] = useState(null);
-  const [age, setAge] = useState('');
+  const [age, setAge] = useState({ years: '', month: '', days: '' });
   const [gender, setGender] = useState('');
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isAgeManuallySet, setIsAgeManuallySet] = useState(false); // Track if age was manually set
   const [errors, setErrors] = useState({
     title: '',
     firstName: '',
     surname: '',
     dob: '',
     age: '',
+    month: '',
+    day: '',
     gender: '',
-    email: ''
+    email: '',
   });
 
   const titles = ["Mr", "Mrs", "Miss", "Mst"];
 
-  const calculateAge = (dob) => {
-    if (!dob || !dob.isValid()) return '';
-    return dayjs().diff(dob, 'year');
+  // 🔹 Calculate Years/month/Days from DOB
+  const calculateDetailedAge = (dob) => {
+    if (!dob || !dob.isValid()) return { years: '', month: '', days: '' };
+
+    const today = dayjs();
+    let years = today.diff(dob, 'year');
+    dob = dob.add(years, 'year');
+    let month = today.diff(dob, 'month');
+    dob = dob.add(month, 'month');
+    let days = today.diff(dob, 'day');
+
+    return { years, month, days };
   };
 
-  const calculateDobFromAge = (age) => {
-    if (!age) return null;
-    const currentYear = dayjs().year();
-    const birthYear = currentYear - parseInt(age, 10);
-    return dayjs(`${birthYear}-01-01`, 'YYYY-MM-DD'); // Set DOB to January 1st of the calculated birth year
+  // 🔹 Calculate DOB from Years/month/Days
+  const calculateDobFromDetailedAge = (ageObj) => {
+    const { years, month, days } = ageObj;
+    if (!years && !month && !days) return null;
+    return dayjs().subtract(years || 0, 'year').subtract(month || 0, 'month').subtract(days || 0, 'day');
   };
 
   const formatDobForApi = (dob) => {
@@ -62,38 +72,25 @@ const AddNewPatient = () => {
     return dob.format('DD/MM/YYYY');
   };
 
+  // 🔹 When user selects DOB
   const handleDobChange = (newValue) => {
     setDob(newValue);
-    setIsAgeManuallySet(false); // DOB was manually set, so age is derived
     if (newValue && newValue.isValid()) {
       if (newValue.isAfter(dayjs())) {
         setErrors((prev) => ({ ...prev, dob: 'The date of birth cannot exceed the current date' }));
-        setAge('');
+        setAge({ years: '', month: '', days: '' });
       } else {
-        setAge(calculateAge(newValue));
+        const detailedAge = calculateDetailedAge(newValue);
+        setAge(detailedAge);
         setErrors((prev) => ({ ...prev, dob: '', age: '' }));
       }
     } else {
-      setAge('');
+      setAge({ years: '', month: '', days: '' });
       setErrors((prev) => ({ ...prev, dob: '' }));
     }
   };
 
-  const handleAgeChange = (e) => {
-    const newAge = e.target.value.replace(/\D/g, '');
-    setAge(newAge);
-    setIsAgeManuallySet(true); // Age was manually set
-
-    if (newAge) {
-      const calculatedDob = calculateDobFromAge(newAge);
-      setDob(calculatedDob);
-      setErrors((prev) => ({ ...prev, age: '', dob: '' }));
-    } else {
-      setDob(null);
-      setErrors((prev) => ({ ...prev, age: 'Age or date of birth is required' }));
-    }
-  };
-
+  // 🔹 Validation
   const validateForm = () => {
     const newErrors = {
       title: '',
@@ -102,9 +99,11 @@ const AddNewPatient = () => {
       dob: '',
       age: '',
       gender: '',
-      email: ''
+      email: '',
     };
     let isValid = true;
+
+    const isAgeEmpty = !age.years && !age.month && !age.days;
 
     if (!title) {
       newErrors.title = 'Title is required';
@@ -114,7 +113,7 @@ const AddNewPatient = () => {
       newErrors.firstName = 'First name is required';
       isValid = false;
     }
-    if (!age && !dob) {
+    if (isAgeEmpty && !dob) {
       newErrors.age = 'Age or date of birth is required';
       isValid = false;
     }
@@ -135,33 +134,44 @@ const AddNewPatient = () => {
     return isValid;
   };
 
+  // 🔹 Submit Handler
   const handleSubmit = async (event) => {
     event.preventDefault();
-
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
 
     setIsLoading(true);
     try {
       const name = firstName.trim();
       const secondname = surname.trim();
       const nameTitle = title.trim();
-      const finalAge = dob && dob.isValid() ? calculateAge(dob) : age;
+      const finalAge =
+        dob && dob.isValid()
+          ? calculateDetailedAge(dob).years
+          : age.years || 0;
       const formattedDob = formatDobForApi(dob);
 
       const response = await axios.post(
-        '/workflow.trigger/gdqraddnewpatient67c00f700b7fd',
-        `countryCode=${encodeURIComponent(countryCode)}&phoneNumber=${encodeURIComponent(phoneNumber)}&name=${encodeURIComponent(name)}&surname=${encodeURIComponent(secondname)}&title=${encodeURIComponent(nameTitle)}&dob=${encodeURIComponent(formattedDob)}&age=${encodeURIComponent(finalAge)}&gender=${encodeURIComponent(gender)}&email=${encodeURIComponent(email)}&networkGDID=${encodeURIComponent(networkGDID)}`,
+        'https://innov-dev.beta.injomo.com/workflow.trigger/gdqraddnewpatient67c00f700b7fd',
+        `countryCode=${encodeURIComponent(countryCode)}&phoneNumber=${encodeURIComponent(
+          phoneNumber
+        )}&name=${encodeURIComponent(name)}&surname=${encodeURIComponent(
+          secondname
+        )}&title=${encodeURIComponent(nameTitle)}&dob=${encodeURIComponent(
+          formattedDob
+        )}&age=${encodeURIComponent(finalAge)}&gender=${encodeURIComponent(
+          gender
+        )}&email=${encodeURIComponent(email)}&networkGDID=${encodeURIComponent(networkGDID)}`,
         {
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
           },
         }
       );
+
       navigate('/booking', { state: { response: response.data[0] } });
     } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Failed to submit. Please try again.';
+      const errorMessage =
+        error.response?.data?.message || 'Failed to submit. Please try again.';
       alert(errorMessage);
     } finally {
       setIsLoading(false);
@@ -189,442 +199,128 @@ const AddNewPatient = () => {
           marginTop: '10px',
         }}
       >
-        {/* Title */}
-        <Box sx={{ mb: 2, textAlign: 'left' }}>
-          <Typography
-            variant="h5"
-            sx={{
-              fontWeight: 'bold',
-              color: '#333',
-              fontSize: '1rem',
-            }}
-          >
-            Add new patient
-          </Typography>
-        </Box>
+        {/* Title Header */}
+        <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#333', fontSize: '1rem', mb: 2 }}>
+          Add new patient
+        </Typography>
 
-        {/* Title Field */}
+        {/* Title */}
         <TextField
           select
-          label={
-            <Box sx={{ display: 'inline-flex', alignItems: 'center' }}>
-              <Typography sx={{ color: '#333', fontSize: '1rem', fontWeight: 'bold', borderRadius: '20px' }}>
-                Title
-              </Typography>
-              <Typography sx={{ color: 'red', ml: 0.5 }}>*</Typography>
-            </Box>
-          }
+          label="Title *"
           value={title}
-          onChange={(e) => {
-            setTitle(e.target.value);
-            if (errors.title) setErrors((prev) => ({ ...prev, title: '' }));
-          }}
+          onChange={(e) => setTitle(e.target.value)}
           fullWidth
           margin="normal"
-          variant="outlined"
-          required
           error={!!errors.title}
           helperText={errors.title}
-          displayEmpty
-          InputLabelProps={{
-            shrink: true,
-            disableAnimation: true,
-          }}
-          InputProps={{
-            endAdornment: !title && (
-              <Typography
-                sx={{
-                  color: '#666',
-                  position: 'absolute',
-                  left: '14px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  pointerEvents: 'none',
-                  opacity: 0.7,
-                }}
-              >
-                Select title
-              </Typography>
-            ),
-          }}
-          sx={{
-            mb: 2,
-            '& .MuiOutlinedInput-root': {
-              borderColor: errors.title ? 'red' : '#666',
-              '&:hover': { borderColor: errors.title ? 'red' : '#333' },
-              '&.Mui-focused': { borderColor: errors.title ? 'red' : '#333' },
-            },
-            '& .MuiInputLabel-outlined': {
-              color: '#333',
-              fontSize: '1rem',
-              transform: 'translate(14px, -6px) scale(0.75)',
-              backgroundColor: 'white',
-              padding: '0 4px',
-            },
-            '& .MuiInputLabel-outlined.Mui-focused': {
-              color: errors.title ? 'red' : '#333',
-              transform: 'translate(14px, -6px) scale(0.75)',
-            },
-            '& .MuiInputLabel-outlined.MuiFormLabel-filled': {
-              transform: 'translate(14px, -6px) scale(0.75)',
-            },
-            '& .MuiFormLabel-asterisk': {
-              display: 'none',
-            },
-          }}
         >
-          <MenuItem value="" disabled>
-            Select title
-          </MenuItem>
-          {titles.map((option) => (
-            <MenuItem key={option} value={option}>
-              {option}
-            </MenuItem>
-          ))}
+          <MenuItem value="" disabled>Select title</MenuItem>
+          {titles.map((t) => <MenuItem key={t} value={t}>{t}</MenuItem>)}
         </TextField>
 
-        {/* First Name Field */}
+        {/* First Name */}
         <TextField
-          label={
-            <Box sx={{ display: 'inline-flex', alignItems: 'center' }}>
-              <Typography sx={{ color: '#333', fontSize: '1rem', fontWeight: 'bold' }}>
-                First Name
-              </Typography>
-              <Typography sx={{ color: 'red', ml: 0.5 }}>*</Typography>
-            </Box>
-          }
+          label="First Name *"
           value={firstName}
-          onChange={(e) => {
-            const inputValue = e.target.value;
-            if (/^[a-zA-Z\s]*$/.test(inputValue)) {
-              setFirstName(inputValue);
-              if (errors.firstName) setErrors((prev) => ({ ...prev, firstName: '' }));
-            } else {
-              setErrors((prev) => ({ ...prev, firstName: 'Please enter only alphabetical characters.' }));
-            }
-          }}
+          onChange={(e) => setFirstName(e.target.value)}
           placeholder="Enter first name"
           fullWidth
           margin="normal"
-          variant="outlined"
-          required
           error={!!errors.firstName}
           helperText={errors.firstName}
-          InputLabelProps={{
-            shrink: true,
-            disableAnimation: true,
-          }}
-          sx={{
-            mb: 2,
-            '& .MuiOutlinedInput-root': {
-              borderColor: errors.firstName ? 'red' : '#666',
-              '&:hover': { borderColor: errors.firstName ? 'red' : '#333' },
-              '&.Mui-focused': { borderColor: errors.firstName ? 'red' : '#333' },
-            },
-            '& .MuiInputLabel-outlined': {
-              color: '#333',
-              fontSize: '1rem',
-              transform: 'translate(14px, -6px) scale(0.75)',
-              backgroundColor: 'white',
-              padding: '0 4px',
-            },
-            '& .MuiInputLabel-outlined.Mui-focused': {
-              color: errors.firstName ? 'red' : '#333',
-              transform: 'translate(14px, -6px) scale(0.75)',
-            },
-            '& .MuiInputLabel-outlined.MuiFormLabel-filled': {
-              transform: 'translate(14px, -6px) scale(0.75)',
-            },
-            '& .MuiFormLabel-asterisk': {
-              display: 'none',
-            },
-          }}
         />
 
-        {/* Surname Field */}
+        {/* Surname */}
         <TextField
-          label={
-            <Box sx={{ display: 'inline-flex', alignItems: 'center' }}>
-              <Typography sx={{ color: '#333', fontSize: '1rem', fontWeight: 'bold' }}>
-                Surname
-              </Typography>
-            </Box>
-          }
+          label="Surname"
           value={surname}
-          onChange={(e) => {
-            const inputValue = e.target.value;
-            if (/^[a-zA-Z\s]*$/.test(inputValue)) {
-              setSurname(inputValue);
-              if (errors.surname) setErrors((prev) => ({ ...prev, surname: '' }));
-            } else {
-              setErrors((prev) => ({ ...prev, surname: 'Please enter only alphabetical characters.' }));
-            }
-          }}
+          onChange={(e) => setSurname(e.target.value)}
           placeholder="Enter surname"
           fullWidth
           margin="normal"
-          variant="outlined"
           error={!!errors.surname}
           helperText={errors.surname}
-          InputLabelProps={{
-            shrink: true,
-            disableAnimation: true,
-          }}
-          sx={{
-            mb: 2,
-            '& .MuiOutlinedInput-root': {
-              borderColor: errors.surname ? 'red' : '#666',
-              '&:hover': { borderColor: errors.surname ? 'red' : '#333' },
-              '&.Mui-focused': { borderColor: errors.surname ? 'red' : '#333' },
-            },
-            '& .MuiInputLabel-outlined': {
-              color: '#333',
-              fontSize: '1rem',
-              transform: 'translate(14px, -6px) scale(0.75)',
-              backgroundColor: 'white',
-              padding: '0 4px',
-            },
-            '& .MuiInputLabel-outlined.Mui-focused': {
-              color: errors.surname ? 'red' : '#333',
-              transform: 'translate(14px, -6px) scale(0.75)',
-            },
-            '& .MuiInputLabel-outlined.MuiFormLabel-filled': {
-              transform: 'translate(14px, -6px) scale(0.75)',
-            },
-            '& .MuiFormLabel-asterisk': {
-              display: 'none',
-            },
-          }}
         />
-        {/* Date of Birth Field */}
+
+        {/* DOB */}
         <LocalizationProvider dateAdapter={AdapterDayjs}>
           <DateField
-            label={
-              <Box sx={{ display: 'inline-flex', alignItems: 'center' }}>
-                <Typography sx={{ color: '#333', fontSize: '1rem', fontWeight: 'bold' }}>
-                  Date of Birth
-                </Typography>
-                <Typography sx={{ color: 'red', ml: 0.5 }}>*</Typography>
-              </Box>
-            }
+            label="Date of Birth *"
             value={dob}
             onChange={handleDobChange}
             format="DD/MM/YYYY"
             fullWidth
             margin="normal"
-            variant="outlined"
             error={!!errors.dob}
             helperText={errors.dob}
-            InputLabelProps={{
-              shrink: true,
-              disableAnimation: true,
-            }}
-            sx={{
-              mb: 2,
-              '& .MuiOutlinedInput-root': {
-                borderColor: errors.dob ? 'red' : '#666',
-                '&:hover': { borderColor: errors.dob ? 'red' : '#333' },
-                '&.Mui-focused': { borderColor: errors.dob ? 'red' : '#333' },
-              },
-              '& .MuiInputLabel-outlined': {
-                color: '#333',
-                fontSize: '1rem',
-                transform: 'translate(14px, -6px) scale(0.75)',
-                backgroundColor: 'white',
-                padding: '0 4px',
-              },
-              '& .MuiInputLabel-outlined.Mui-focused': {
-                color: errors.dob ? 'red' : '#333',
-                transform: 'translate(14px, -6px) scale(0.75)',
-              },
-              '& .MuiInputLabel-outlined.MuiFormLabel-filled': {
-                transform: 'translate(14px, -6px) scale(0.75)',
-              },
-              '& .MuiFormLabel-asterisk': {
-                display: 'none',
-              },
-            }}
           />
         </LocalizationProvider>
 
-        {/* Age Field */}
-        <TextField
-          label={
-            <Box sx={{ display: 'inline-flex', alignItems: 'center' }}>
-              <Typography sx={{ color: '#333', fontSize: '1rem', fontWeight: 'bold' }}>
-                Age
-              </Typography>
-              <Typography sx={{ color: 'red', ml: 0.5 }}>*</Typography>
-            </Box>
-          }
-          value={age}
-          onChange={handleAgeChange}
-          placeholder="YY"
-          fullWidth
-          margin="normal"
-          variant="outlined"
-          required={!dob}
-          type="tel"
-          inputProps={{ 
-            inputMode: 'numeric', 
-            pattern: '[0-9]*', 
-            readOnly: dob && dob.isValid() && !errors.dob && !isAgeManuallySet // Make read-only only if DOB was manually set
-          }}
-          error={!!errors.age}
-          helperText={errors.age}
-          InputLabelProps={{
-            shrink: true,
-            disableAnimation: true,
-          }}
-          sx={{
-            mb: 2,
-            '& .MuiOutlinedInput-root': {
-              borderColor: errors.age ? 'red' : '#666',
-              '&:hover': { borderColor: errors.age ? 'red' : '#333' },
-              '&.Mui-focused': { borderColor: errors.age ? 'red' : '#333' },
-            },
-            '& .MuiInputLabel-outlined': {
-              color: '#333',
-              fontSize: '1rem',
-              transform: 'translate(14px, -6px) scale(0.75)',
-              backgroundColor: 'white',
-              padding: '0 4px',
-            },
-            '& .MuiInputLabel-outlined.Mui-focused': {
-              color: errors.age ? 'red' : '#333',
-              transform: 'translate(14px, -6px) scale(0.75)',
-            },
-            '& .MuiInputLabel-outlined.MuiFormLabel-filled': {
-              transform: 'translate(14px, -6px) scale(0.75)',
-            },
-            '& .MuiFormLabel-asterisk': {
-              display: 'none',
-            },
-          }}
-        />
+        {/* Age Section */}
+        <Box sx={{ mb: 2 }}>
+          <Typography sx={{ fontWeight: 'bold', mb: 1 }}>Age *</Typography>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            {['years', 'month', 'days'].map((key) => (
+              <TextField
+                key={key}
+                type="number"
+                label={key.charAt(0).toUpperCase() + key.slice(1)}
+                value={age[key] || ''}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/\D/g, '');
+                  const updated = { ...age, [key]: val };
+                  setAge(updated);
+                  const newDob = calculateDobFromDetailedAge(updated);
+                  setDob(newDob);
+                }}
+                inputProps={{
+                  min: 0,
+                  ...(key === 'month' && { max: 11 }),
+                  ...(key === 'days' && { max: 31 }),
+                }}
+                fullWidth
+                error={!!errors.age}
+              />
+            ))}
+          </Box>
+          {errors.age && (
+            <Typography variant="caption" color="error" sx={{ mt: 1 }}>
+              {errors.age}
+            </Typography>
+          )}
+        </Box>
 
-        {/* Gender Field (Radio Buttons) */}
-        <FormControl
-          component="fieldset"
-          required
-          error={!!errors.gender}
-          sx={{
-            mb: 2,
-            width: '100%',
-            '& .MuiFormLabel-asterisk': {
-              display: 'none',
-            },
-          }}
-        >
-          <FormLabel
-            component="legend"
-            sx={{
-              color: errors.gender ? 'red' : '#333',
-              fontSize: '1rem',
-              fontWeight: 'normal',
-              backgroundColor: 'white',
-              padding: '0 4px',
-              transform: 'translate(0, -6px) scale(0.75)',
-              transformOrigin: 'top left',
-              '&.Mui-focused': {
-                color: errors.gender ? 'red' : '#333',
-              },
-            }}
-          >
-            <Box sx={{ display: 'inline-flex', alignItems: 'center' }}>
-              <Typography sx={{ color: 'inherit', fontSize: '1rem', mt: 1, fontWeight: 'bold' }}>
-                Gender
-              </Typography>
-              <Typography sx={{ color: 'red', ml: 0.5, mt: 1 }}>*</Typography>
-            </Box>
-          </FormLabel>
+        {/* Gender */}
+        <FormControl required error={!!errors.gender} sx={{ mb: 2 }}>
+          <FormLabel>Gender</FormLabel>
           <RadioGroup
             row
             value={gender}
-            onChange={(e) => {
-              setGender(e.target.value);
-              if (errors.gender) setErrors((prev) => ({ ...prev, gender: '' }));
-            }}
-            sx={{ pl: 2 }}
+            onChange={(e) => setGender(e.target.value)}
           >
-            <FormControlLabel
-              value="Male"
-              control={<Radio sx={{ color: errors.gender ? 'red' : '#666', '&.Mui-checked': { color: '#E33610' } }} />}
-              label="Male"
-            />
-            <FormControlLabel
-              value="Female"
-              control={<Radio sx={{ color: errors.gender ? 'red' : '#666', '&.Mui-checked': { color: '#E33610' } }} />}
-              label="Female"
-            />
-            <FormControlLabel
-              value="Others"
-              control={<Radio sx={{ color: errors.gender ? 'red' : '#666', '&.Mui-checked': { color: '#E33610' } }} />}
-              label="Other"
-            />
+            <FormControlLabel value="Male" control={<Radio />} label="Male" />
+            <FormControlLabel value="Female" control={<Radio />} label="Female" />
+            <FormControlLabel value="Others" control={<Radio />} label="Other" />
           </RadioGroup>
           {errors.gender && (
-            <Typography variant="caption" color="error" sx={{ pl: 2 }}>
-              {errors.gender}
-            </Typography>
+            <Typography variant="caption" color="error">{errors.gender}</Typography>
           )}
         </FormControl>
 
-        {/* Email Field */}
+        {/* Email */}
         <TextField
-          label={
-            <Box sx={{ display: 'inline-flex', alignItems: 'center' }}>
-              <Typography sx={{ color: '#333', fontSize: '1rem', fontWeight: 'bold' }}>
-                Email
-              </Typography>
-            </Box>
-          }
+          label="Email"
           value={email}
-          onChange={(e) => {
-            const inputValue = e.target.value;
-            setEmail(inputValue);
-            if (inputValue && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(inputValue)) {
-              setErrors((prev) => ({ ...prev, email: 'Please enter a valid email address.' }));
-            } else {
-              setErrors((prev) => ({ ...prev, email: '' }));
-            }
-          }}
+          onChange={(e) => setEmail(e.target.value)}
           placeholder="example@gmail.com"
           fullWidth
           margin="normal"
-          variant="outlined"
-          type="email"
           error={!!errors.email}
           helperText={errors.email}
-          InputLabelProps={{
-            shrink: true,
-            disableAnimation: true,
-          }}
-          sx={{
-            mb: 2,
-            '& .MuiOutlinedInput-root': {
-              borderColor: errors.email ? 'red' : '#666',
-              '&:hover': { borderColor: errors.email ? 'red' : '#333' },
-              '&.Mui-focused': { borderColor: errors.email ? 'red' : '#333' },
-            },
-            '& .MuiInputLabel-outlined': {
-              color: '#333',
-              fontSize: '1rem',
-              transform: 'translate(14px, -6px) scale(0.75)',
-              backgroundColor: 'white',
-              padding: '0 4px',
-            },
-            '& .MuiInputLabel-outlined.Mui-focused': {
-              color: errors.email ? 'red' : '#333',
-              transform: 'translate(14px, -6px) scale(0.75)',
-            },
-            '& .MuiInputLabel-outlined.MuiFormLabel-filled': {
-              transform: 'translate(14px, -6px) scale(0.75)',
-            },
-          }}
         />
 
-        {/* Continue Button */}
+        {/* Submit Button */}
         <Button
           type="submit"
           variant="contained"
@@ -637,9 +333,7 @@ const AddNewPatient = () => {
             textTransform: 'none',
             fontWeight: 'bold',
             borderRadius: '8px',
-            '&:hover': {
-              bgcolor: '#C62800',
-            },
+            '&:hover': { bgcolor: '#C62800' },
           }}
         >
           {isLoading ? <CircularProgress size={24} sx={{ color: 'white' }} /> : 'Continue'}
@@ -650,14 +344,9 @@ const AddNewPatient = () => {
         <Box
           sx={{
             position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            bgcolor: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
+            top: 0, left: 0, right: 0, bottom: 0,
+            bgcolor: 'rgba(0,0,0,0.5)',
+            display: 'flex', justifyContent: 'center', alignItems: 'center',
             zIndex: 1000,
           }}
         >

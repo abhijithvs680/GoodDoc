@@ -47,7 +47,7 @@ const Form1 = () => {
 
       try {
         const response = await axios.post(
-          '/workflow.trigger/gdgetnetworkinfobygdidqr6828543b975ac',
+          'https://innov-dev.beta.injomo.com/workflow.trigger/gdgetnetworkinfobygdidqr6828543b975ac',
           `networkGDID=${encodeURIComponent(networkGDID)}`,
           {
             headers: {
@@ -126,7 +126,7 @@ const Form1 = () => {
         try {
             const numericPhoneNumber = phoneNumber.replace(/\D/g, '');
             const response = await axios.post(
-                '/workflow.trigger/generateotpforanynumber67bfffa9eefd4',
+                'https://innov-dev.beta.injomo.com/workflow.trigger/generateotpforanynumber67bfffa9eefd4',
                 `phone=${encodeURIComponent(numericPhoneNumber)}&action=generate&countryCode=${encodeURIComponent(getCountryCallingCode(countryCode))}`,
                 {
                     headers: {
@@ -167,7 +167,7 @@ const Form1 = () => {
         setIsLoading(true);
         try {
             const otpResponse = await axios.post(
-                '/workflow.trigger/checkotpforallnumbers67c186f9b4a64',
+                'https://innov-dev.beta.injomo.com/workflow.trigger/checkotpforallnumbers67c186f9b4a64',
                 `OTP=${encodeURIComponent(otp)}&phone=${encodeURIComponent(numericPhoneNumber)}`,
                 {
                     headers: {
@@ -179,7 +179,7 @@ const Form1 = () => {
                 const networkGDIDValue = networkGDID;
                 const logrowIdValue = logrowId;
                 const submissionResponse = await axios.post(
-                    '/workflow.trigger/gdrecieveqrcodeformsubmit67b3210bc2752',
+                    'https://innov-dev.beta.injomo.com/workflow.trigger/gdrecieveqrcodeformsubmit67b3210bc2752',
                     `phoneNumber=${encodeURIComponent(numericPhoneNumber)}&networkGDID=${encodeURIComponent(networkGDIDValue)}&logRowID=${encodeURIComponent(logrowIdValue)}`,
                     {
                         headers: {

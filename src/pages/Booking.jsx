@@ -28,6 +28,8 @@ const Booking = () => {
   const {
     name = '',
     age = '',
+    month = '',
+    day = '',
     gender = '',
     networkname = '',
     networkspecialization = '',
@@ -78,7 +80,7 @@ const Booking = () => {
 
     try {
       const response = await axios.post(
-        '/workflow.trigger/gdqrappoinmentrequestreciver67b6d8cb139ad',
+        'https://innov-dev.beta.injomo.com/workflow.trigger/gdqrappoinmentrequestreciver67b6d8cb139ad',
         `patientGDID=${encodeURIComponent(patientGDID || '')}&networkGDID=${encodeURIComponent(networkGDID || '')}&details=${encodeURIComponent(medicalHistoryDetails)}&historyShare=${encodeURIComponent(shareMedicalHistory.toString())}&btnText=RequestAppointment`,
         {
           headers: {
@@ -110,7 +112,7 @@ const Booking = () => {
   const handleShareMedicalHistory = async () => {
     try {
       const response = await axios.post(
-        '/workflow.trigger/gdqrappoinmentrequestreciver67b6d8cb139ad',
+        'https://innov-dev.beta.injomo.com/workflow.trigger/gdqrappoinmentrequestreciver67b6d8cb139ad',
         `patientGDID=${encodeURIComponent(patientGDID || '')}&networkGDID=${encodeURIComponent(networkGDID || '')}&btnText=ShareMedicalHistory`,
         {
           headers: {
@@ -133,7 +135,7 @@ const Booking = () => {
   const handleUnshareMedicalHistory = async () => {
     try {
       const response = await axios.post(
-        '/workflow.trigger/gdqrappoinmentrequestreciver67b6d8cb139ad',
+        'https://innov-dev.beta.injomo.com/workflow.trigger/gdqrappoinmentrequestreciver67b6d8cb139ad',
         `patientGDID=${encodeURIComponent(patientGDID || '')}&networkGDID=${encodeURIComponent(networkGDID || '')}&btnText=UnshareMedicalHistory`,
         {
           headers: {
@@ -342,8 +344,14 @@ const Booking = () => {
                   {name} {/* Replace with dynamic name */}
                 </Typography>
                 <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                  {age}Y - {gender} {/* Replace with dynamic age and gender */}
-                </Typography>
+  {age
+    ? `${age}Y`
+    : month
+    ? `${month}M`
+    : day
+    ? `${day}D`
+    : '0'}{gender ? ` - ${gender}` : ''}
+</Typography>
               </Box>
             </Box>
 
